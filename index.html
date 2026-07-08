@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shareek — Recording Health</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root { --navy:#0D1B2A; --cream:#E8E6DD; --cream2:#D3D1C7; --green:#4CAF7D;
+  --gGreen:#2FA36B; --gAmber:#E0A100; --gRed:#D64545; --grey:#8a8f98; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--cream); color:var(--navy); font-family:Poppins,Cairo,sans-serif; }
+[dir=rtl] body { font-family:Cairo,Poppins,sans-serif; }
+h1,h2 { font-weight:700; }
+.wrap { max-width:1100px; margin:0 auto; padding:16px; }
+header.top { background:var(--navy); color:var(--cream); padding:14px 20px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+header.top h1 { margin:0; font-size:22px; }
+header.top span.sub { opacity:.7; font-size:13px; flex:1; }
+header.top button { background:var(--green); color:#fff; border:0; border-radius:8px; padding:8px 16px; font-weight:600; cursor:pointer; font-size:13px; font-family:inherit; }
+header.top button.ghost { background:transparent; border:1px solid rgba(255,255,255,.35); }
+.langtoggle { display:inline-flex; border:1px solid rgba(255,255,255,.35); border-radius:8px; overflow:hidden; }
+.langtoggle button { background:transparent; color:var(--cream); border:0; border-radius:0; padding:7px 12px; font-weight:600; cursor:pointer; font-size:13px; font-family:inherit; }
+.langtoggle button.active { background:var(--green); color:#fff; }
+
+/* ---- login ---- */
+.login { max-width:360px; margin:12vh auto; background:#fff; border-radius:16px; padding:28px 26px; box-shadow:0 4px 20px rgba(13,27,42,.15); text-align:center; }
+.login h1 { margin:0 0 4px; font-size:24px; }
+.login p { color:#666; font-size:13px; margin:0 0 18px; }
+.login input { width:100%; padding:12px 14px; border:1px solid var(--cream2); border-radius:10px; font-size:16px; font-family:inherit; text-align:center; }
+.login button { width:100%; margin-top:12px; background:var(--green); color:#fff; border:0; border-radius:10px; padding:12px; font-weight:700; font-size:15px; cursor:pointer; font-family:inherit; }
+.login .err { color:var(--gRed); font-size:13px; min-height:18px; margin-top:10px; font-weight:600; }
+.login .lang { margin-top:16px; }
+.login .lang a { color:#274b7a; font-size:12px; text-decoration:none; cursor:pointer; margin:0 6px; }
+.login .forgot { margin-top:12px; }
+.login .forgot a { color:#274b7a; font-size:12px; text-decoration:none; cursor:pointer; margin:0 6px; }
+.login .info { color:var(--gGreen); font-size:12px; margin:0 0 8px; font-weight:600; }
+
+/* ---- overview cards ---- */
+.overview { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px; margin:16px 0; }
+.ccard { background:#fff; border-radius:12px; padding:14px 16px; box-shadow:0 1px 4px rgba(13,27,42,.12); cursor:pointer; border:2px solid transparent; }
+.ccard.sel { border-color:var(--green); }
+.ccard .name { font-size:16px; font-weight:700; display:flex; align-items:center; gap:8px; }
+.ccard .row { display:flex; justify-content:space-between; font-size:13px; margin-top:8px; }
+.ccard .row span:last-child { font-weight:600; }
+.ccard .att { color:var(--gRed); font-weight:700; }
+.ccard .clean { color:var(--gGreen); font-weight:700; }
+
+/* ---- tabs ---- */
+.tabs { display:flex; gap:6px; flex-wrap:wrap; margin:6px 0 14px; }
+.tabs button { background:#fff; color:var(--navy); border:1px solid var(--cream2); border-radius:999px; padding:6px 14px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; }
+.tabs button.active { background:var(--navy); color:var(--cream); border-color:var(--navy); }
+.tabs button .badge { display:inline-block; margin-inline-start:6px; background:var(--gRed); color:#fff; border-radius:999px; padding:0 6px; font-size:11px; }
+
+/* ---- table ---- */
+table { width:100%; border-collapse:collapse; background:#fff; border-radius:12px; overflow:hidden; font-size:13px; box-shadow:0 1px 4px rgba(13,27,42,.12); }
+th { background:var(--navy); color:var(--cream); text-align:start; padding:8px 10px; font-weight:600; white-space:nowrap; }
+td { padding:8px 10px; border-top:1px solid var(--cream2); vertical-align:middle; }
+tr:hover td { background:#f6f5f0; }
+tr.dark td { background:#fcf1f1; }
+tr.muted td { color:#999; }
+.scroll { overflow-x:auto; margin-bottom:24px; }
+.dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-inline-end:6px; vertical-align:middle; }
+.sub { color:#777; font-size:11px; }
+.att-pill { display:inline-block; background:#fbe0dd; color:#c0392b; border-radius:999px; padding:1px 8px; font-size:11px; font-weight:700; }
+.note { font-size:12px; color:#666; margin:6px 0 14px; }
+.empty { padding:22px; text-align:center; color:#777; background:#fff; border-radius:12px; box-shadow:0 1px 4px rgba(13,27,42,.12); }
+#loading { text-align:center; padding:40px; font-size:15px; }
+h2 .att { color:var(--gRed); }
+.addform { display:flex; gap:8px; flex-wrap:wrap; align-items:center; background:#fff; padding:14px; border-radius:12px; box-shadow:0 1px 4px rgba(13,27,42,.12); margin-bottom:24px; }
+.addform input, .addform select { padding:9px 11px; border:1px solid var(--cream2); border-radius:8px; font-family:inherit; font-size:13px; }
+.addform button { background:var(--green); color:#fff; border:0; border-radius:8px; padding:9px 16px; font-weight:600; cursor:pointer; font-family:inherit; font-size:13px; }
+td.acts { white-space:nowrap; }
+td.acts button { background:var(--navy); color:var(--cream); border:0; border-radius:7px; padding:5px 10px; font-size:12px; font-weight:600; cursor:pointer; font-family:inherit; margin-inline-end:5px; }
+td.acts button.danger { background:#c0392b; color:#fff; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<noscript><div style="padding:40px;text-align:center;font-family:sans-serif">
+هذه الصفحة تحتاج تفعيل جافاسكربت · This page needs JavaScript enabled
+</div></noscript>
+<script>
+const SB = "https://pxeiozmsfvmypcsqbcqv.supabase.co";
+const API = SB + "/functions/v1/health";
+const ADMIN_API = SB + "/functions/v1/admin";
+// Public anon key — identifies the project to Supabase Auth + the function gateway. The real gate is
+// the user's email + password (Supabase Auth). Safe to ship in client HTML.
+const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4ZWlvem1zZnZteXBjc3FiY3F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwNDI1MTcsImV4cCI6MjA5NzYxODUxN30.s23PCgc_HuGRUSdN3hMNXBsdsavofLBIZj3Ppq5lP94";
+const REFRESH_MS = 5 * 60 * 1000; // manual button + auto every 5 minutes (see plan: keeps cost near-zero)
+
+// ---- language: one page, two languages, no mixing. Default = Arabic. ----
+const T = {
+  en: {
+    title:"Recording Health", subtitle:"Baghdad time · updated", refresh:"Refresh", logout:"Log out",
+    loginTitle:"Recording Health", loginHint:"Sign in to continue",
+    emailLabel:"Email", passwordLabel:"Password", loginBtn:"Sign in",
+    loading:"Loading…", noConn:"No connection — check internet and try again.", serverError:"Server error",
+    badCreds:"Wrong email or password.", noAccess:"This account has no dashboard access.",
+    forgotLink:"Forgot password?", forgotTitle:"Reset password", forgotHint:"We'll email you a code",
+    sendCode:"Send code", backToLogin:"← Back to sign in",
+    codeSent:"If that email has an account, a code is on its way. Check your inbox (and spam).",
+    resetTitle:"Enter the code from your email and a new password", codeLabel:"code from email",
+    newPwLabel:"new password (min 6)", resetSignIn:"Reset & sign in", resendLink:"Resend code",
+    badResetCode:"Wrong or expired code.", pwTooShort:"Password must be at least 6 characters.",
+    clients:"Clients", phonesWord:"phones", onlineWord:"recording", needAttention:"need attention",
+    allGood:"all good", noClients:"No clients reporting yet.",
+    colPhone:"Phone / Agent", colStatus:"Status", colBattery:"Battery", colStorage:"Storage",
+    colLastRec:"Last recording", colLastCheckin:"Last check-in", colDevice:"Device",
+    stHealthy:"Recording", stOffline:"Offline", stDark:"Went dark", stNotRec:"Not recording",
+    stPaused:"Paused", stRetired:"Retired",
+    never:"never", ago:"ago", lastSeen:"last seen", emptyPhones:"No phones in this client yet.",
+    note:"<b>Green</b> = recording & healthy. <b>Red</b> = follow up: <i>Offline</i> (phone off / no internet), <i>Went dark</i> (no check-in for a day — likely off or app removed), <i>Not recording</i> (Shizuku off), low <i>battery</i> (&lt;15% unplugged) or nearly-full <i>storage</i> (&lt;300 MB). 🔌 = charging. Grey = paused.",
+    accounts:"Accounts", backToHealth:"← Back to health", accountsTitle:"Dashboard logins",
+    colEmail:"Email", colRole:"Role", colClient:"Client", colActive:"Status",
+    roleMaster:"Master", roleSupervisor:"Supervisor", statusActive:"active", statusDisabled:"disabled",
+    addTitle:"Add a supervisor login", phEmail:"email", phPassword:"password (min 6)", pickClient:"— choose client —",
+    addBtn:"Create", resetBtn:"Reset password", disableBtn:"Disable", enableBtn:"Enable", deleteBtn:"Delete",
+    newPwPrompt:"New password for", confirmDelete:"Delete this login?", saving:"Saving…",
+    doneCreated:"Account created.", doneUpdated:"Account updated.", doneSaved:"Saved.", allClientsTag:"all clients",
+    hours:"h", minutes:"m", days:"d",
+  },
+  ar: {
+    title:"صحة التسجيل", subtitle:"توقيت بغداد · آخر تحديث", refresh:"تحديث", logout:"خروج",
+    loginTitle:"صحة التسجيل", loginHint:"سجّل الدخول للمتابعة",
+    emailLabel:"البريد الإلكتروني", passwordLabel:"كلمة المرور", loginBtn:"دخول",
+    loading:"جاري التحميل…", noConn:"لا يوجد اتصال — تحقق من الإنترنت وحاول مرة أخرى.", serverError:"خطأ في الخادم",
+    badCreds:"بريد إلكتروني أو كلمة مرور غير صحيحة.", noAccess:"هذا الحساب لا يملك صلاحية الدخول للوحة.",
+    forgotLink:"نسيت كلمة المرور؟", forgotTitle:"إعادة تعيين كلمة المرور", forgotHint:"سنرسل لك رمزاً بالبريد",
+    sendCode:"إرسال الرمز", backToLogin:"← رجوع لتسجيل الدخول",
+    codeSent:"إذا كان لهذا البريد حساب، فالرمز في طريقه إليك. تحقق من بريدك (ومجلد الرسائل غير المرغوبة).",
+    resetTitle:"أدخل الرمز من بريدك وكلمة مرور جديدة", codeLabel:"الرمز من البريد",
+    newPwLabel:"كلمة مرور جديدة (٦ على الأقل)", resetSignIn:"تعيين وتسجيل الدخول", resendLink:"إعادة إرسال الرمز",
+    badResetCode:"رمز خاطئ أو منتهي الصلاحية.", pwTooShort:"كلمة المرور ٦ أحرف على الأقل.",
+    clients:"المراكز", phonesWord:"جهاز", onlineWord:"يسجّل", needAttention:"تحتاج متابعة",
+    allGood:"سليم", noClients:"لا توجد مراكز تُبلّغ بعد.",
+    colPhone:"الجهاز / الوكيل", colStatus:"الحالة", colBattery:"البطارية", colStorage:"التخزين",
+    colLastRec:"آخر تسجيل", colLastCheckin:"آخر اتصال", colDevice:"الجهاز",
+    stHealthy:"يسجّل", stOffline:"غير متصل", stDark:"انقطع", stNotRec:"لا يسجّل",
+    stPaused:"موقوف", stRetired:"متقاعد",
+    never:"أبداً", ago:"منذ", lastSeen:"آخر ظهور", emptyPhones:"لا توجد أجهزة في هذا المركز بعد.",
+    note:"<b>أخضر</b> = يسجّل وسليم. <b>أحمر</b> = يحتاج متابعة: <i>غير متصل</i> (الجهاز مطفأ أو لا إنترنت)، <i>انقطع</i> (لا اتصال منذ يوم — غالباً مطفأ أو حُذف التطبيق)، <i>لا يسجّل</i> (Shizuku متوقف)، <i>بطارية</i> منخفضة (أقل من 15% وغير موصول) أو <i>تخزين</i> شبه ممتلئ (أقل من 300 ميغابايت). 🔌 = يشحن. رمادي = موقوف.",
+    accounts:"الحسابات", backToHealth:"← رجوع للصحة", accountsTitle:"حسابات الدخول",
+    colEmail:"البريد", colRole:"الدور", colClient:"المركز", colActive:"الحالة",
+    roleMaster:"مدير", roleSupervisor:"مشرف", statusActive:"مفعّل", statusDisabled:"موقوف",
+    addTitle:"إضافة حساب مشرف", phEmail:"البريد الإلكتروني", phPassword:"كلمة المرور (٦ على الأقل)", pickClient:"— اختر المركز —",
+    addBtn:"إنشاء", resetBtn:"تغيير كلمة المرور", disableBtn:"إيقاف", enableBtn:"تفعيل", deleteBtn:"حذف",
+    newPwPrompt:"كلمة مرور جديدة لـ", confirmDelete:"حذف هذا الحساب؟", saving:"جاري الحفظ…",
+    doneCreated:"تم إنشاء الحساب.", doneUpdated:"تم تحديث الحساب.", doneSaved:"تم الحفظ.", allClientsTag:"كل المراكز",
+    hours:"س", minutes:"د", days:"ي",
+  },
+};
+let lang = localStorage.getItem("shareek_lang") || "ar";
+const t = k => (T[lang] && T[lang][k]) ?? T.en[k] ?? k;
+
+function applyLang() {
+  const el = document.documentElement;
+  el.lang = lang;
+  el.dir = lang === "ar" ? "rtl" : "ltr";
+}
+function setLang(l) {
+  if (l === lang) return;
+  lang = l;
+  localStorage.setItem("shareek_lang", l);
+  applyLang();
+  route();
+}
+
+window.onerror = function (msg) {
+  const el = document.getElementById("app");
+  if (el && !el.innerHTML.trim()) {
+    el.innerHTML = '<div style="padding:40px;text-align:center">' + String(msg) + '</div>';
+  }
+};
+
+const esc = s => String(s ?? "").replace(/[&<>"']/g,
+  c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+const fmtTime = iso => iso
+  ? new Intl.DateTimeFormat(lang === "ar" ? "ar-u-nu-latn" : "en-GB",
+      { timeZone:"Asia/Baghdad", dateStyle:"medium", timeStyle:"short" }).format(new Date(iso))
+  : "—";
+// short "3h" / "2d" style age from an ISO time
+function ago(iso) {
+  if (!iso) return "";
+  const m = (Date.now() - new Date(iso).getTime()) / 60000;
+  if (m < 60) return Math.max(1, Math.round(m)) + t("minutes");
+  if (m < 60 * 24) return Math.round(m / 60) + t("hours");
+  return Math.round(m / 1440) + t("days");
+}
+
+const app = document.getElementById("app");
+const GREEN = "var(--gGreen)", AMBER = "var(--gAmber)", RED = "var(--gRed)", GREY = "var(--grey)";
+const dot = c => `<span class="dot" style="background:${c}"></span>`;
+
+// runtime state
+let session = null;     // { access_token, refresh_token } — kept in memory only (never stored)
+let data = null;        // last server payload
+let selectedCode = null;
+let timer = null;
+let adminMode = false;  // master-only Accounts view
+let adminData = null;   // { users, clients }
+let adminMsg = "";      // last action feedback
+
+// ---- status helpers ----------------------------------------------------------
+function statusMeta(s) {
+  switch (s) {
+    case "healthy":       return { c:GREEN, label:t("stHealthy") };
+    case "offline":       return { c:RED,   label:t("stOffline") };
+    case "dark":          return { c:RED,   label:t("stDark") };
+    case "not_recording": return { c:RED,   label:t("stNotRec") };
+    case "paused":        return { c:GREY,  label:t("stPaused") };
+    case "retired":       return { c:GREY,  label:t("stRetired") };
+    default:              return { c:GREY,  label:esc(s) };
+  }
+}
+const needsAttention = p =>
+  ["offline", "dark", "not_recording"].includes(p.status) || p.low_battery || p.low_storage;
+
+function rollup(client) {
+  let online = 0, attention = 0, active = 0;
+  for (const p of client.phones) {
+    if (p.roster_status === "retired") continue;
+    active++;
+    if (p.status === "healthy") online++;
+    if (needsAttention(p)) attention++;
+  }
+  return { online, attention, active };
+}
+
+function batteryCell(p) {
+  if (p.battery_level == null) return `<td><span class="sub">—</span></td>`;
+  const pct = p.battery_level, charging = !!p.battery_charging;
+  let c = GREEN;
+  if (pct < 30) c = AMBER;
+  if (pct < 15 && !charging) c = RED;
+  return `<td>${dot(c)}${pct}%${charging ? " 🔌" : ""}</td>`;
+}
+function storageCell(p) {
+  if (p.storage_free_mb == null) return `<td><span class="sub">—</span></td>`;
+  const mb = p.storage_free_mb;
+  const c = mb < 300 ? RED : mb < 1024 ? AMBER : GREEN;
+  const txt = mb >= 1024 ? (mb / 1024).toFixed(1) + " GB" : mb + " MB";
+  return `<td>${dot(c)}${txt}</td>`;
+}
+
+function phoneTable(client) {
+  if (!client.phones.length) return `<div class="empty">${t("emptyPhones")}</div>`;
+  // worst-first: attention on top, then offline/dark, then rest; paused/retired last
+  const rank = p => (needsAttention(p) ? 0 : p.status === "paused" || p.status === "retired" ? 2 : 1);
+  const phones = [...client.phones].sort((a, b) => rank(a) - rank(b));
+  const rows = phones.map(p => {
+    const m = statusMeta(p.status);
+    const muted = p.status === "paused" || p.status === "retired";
+    const darkNote = p.status === "dark" && p.reported_at
+      ? ` <span class="sub">(${t("lastSeen")} ${t("ago")} ${ago(p.reported_at)})</span>` : "";
+    const name = p.label || p.agent_name || p.install_id.slice(0, 8);
+    const subtitle = p.label && p.agent_name ? p.agent_name : "";
+    return `<tr class="${p.status === "dark" ? "dark" : ""}${muted ? " muted" : ""}">
+      <td>${esc(name)}${subtitle ? `<br><span class="sub">${esc(subtitle)}</span>` : ""}</td>
+      <td>${dot(m.c)}${m.label}${darkNote}</td>
+      ${batteryCell(p)}
+      ${storageCell(p)}
+      <td>${p.last_recording_at ? fmtTime(p.last_recording_at) : t("never")}</td>
+      <td>${p.reported_at ? fmtTime(p.reported_at) : "—"}</td>
+      <td><span class="sub">${esc(p.device_model || "")}${p.app_version ? " · v" + esc(p.app_version) : ""}</span></td>
+    </tr>`;
+  }).join("");
+  return `<div class="scroll"><table>
+    <tr><th>${t("colPhone")}</th><th>${t("colStatus")}</th><th>${t("colBattery")}</th><th>${t("colStorage")}</th>
+        <th>${t("colLastRec")}</th><th>${t("colLastCheckin")}</th><th>${t("colDevice")}</th></tr>
+    ${rows}</table></div>`;
+}
+
+// ---- screens -----------------------------------------------------------------
+function loginScreen(err) {
+  applyLang();
+  app.innerHTML = `<div class="login">
+    <h1>Shareek</h1>
+    <p>${t("loginTitle")} · ${t("loginHint")}</p>
+    <input id="email" type="email" autocomplete="username" placeholder="${t("emailLabel")}"
+      onkeydown="if(event.key==='Enter')signIn()">
+    <input id="password" type="password" autocomplete="current-password" placeholder="${t("passwordLabel")}"
+      style="margin-top:10px" onkeydown="if(event.key==='Enter')signIn()">
+    <button onclick="signIn()">${t("loginBtn")}</button>
+    <div class="err">${err ? esc(err) : ""}</div>
+    <div class="forgot"><a onclick="showForgot()">${t("forgotLink")}</a></div>
+    <div class="lang">
+      <a onclick="setLang('ar')">العربية</a> · <a onclick="setLang('en')">English</a>
+    </div>
+  </div>`;
+  const el = document.getElementById("email");
+  if (el) el.focus();
+}
+
+// ---- forgot password (emailed 6-digit code; fits the file-based dashboard, no hosted page) ----
+function forgotRequestScreen(err, email) {
+  applyLang();
+  app.innerHTML = `<div class="login">
+    <h1>Shareek</h1>
+    <p>${t("forgotTitle")} · ${t("forgotHint")}</p>
+    <input id="fp_email" type="email" autocomplete="username" placeholder="${t("emailLabel")}"
+      value="${esc(email || "")}" onkeydown="if(event.key==='Enter')sendResetCode()">
+    <button onclick="sendResetCode()">${t("sendCode")}</button>
+    <div class="err">${err ? esc(err) : ""}</div>
+    <div class="forgot"><a onclick="loginScreen()">${t("backToLogin")}</a></div>
+    <div class="lang">
+      <a onclick="setLang('ar')">العربية</a> · <a onclick="setLang('en')">English</a>
+    </div>
+  </div>`;
+  const el = document.getElementById("fp_email");
+  if (el) el.focus();
+}
+
+function forgotResetScreen(email, err, info) {
+  applyLang();
+  app.innerHTML = `<div class="login">
+    <h1>Shareek</h1>
+    <p>${t("resetTitle")}</p>
+    ${info ? `<p class="info">${esc(info)}</p>` : ""}
+    <input id="rp_email" type="email" value="${esc(email || "")}" readonly style="opacity:.7">
+    <input id="rp_code" type="text" inputmode="numeric" autocomplete="one-time-code"
+      placeholder="${t("codeLabel")}" style="margin-top:10px" onkeydown="if(event.key==='Enter')submitReset()">
+    <input id="rp_pw" type="text" autocomplete="new-password" placeholder="${t("newPwLabel")}"
+      style="margin-top:10px" onkeydown="if(event.key==='Enter')submitReset()">
+    <button onclick="submitReset()">${t("resetSignIn")}</button>
+    <div class="err">${err ? esc(err) : ""}</div>
+    <div class="forgot">
+      <a onclick="showForgot()">${t("resendLink")}</a> · <a onclick="loginScreen()">${t("backToLogin")}</a>
+    </div>
+    <div class="lang">
+      <a onclick="setLang('ar')">العربية</a> · <a onclick="setLang('en')">English</a>
+    </div>
+  </div>`;
+  const el = document.getElementById("rp_code");
+  if (el) el.focus();
+}
+
+function showForgot() {
+  const pre = document.getElementById("email")?.value || document.getElementById("fp_email")?.value || "";
+  forgotRequestScreen("", pre.trim());
+}
+
+async function sendResetCode() {
+  const email = (document.getElementById("fp_email")?.value || "").trim();
+  if (!email) return;
+  let res;
+  try {
+    res = await fetch(SB + "/auth/v1/recover", {
+      method: "POST", headers: { apikey: ANON, "content-type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+  } catch (e) { return forgotRequestScreen(t("noConn"), email); }
+  // Supabase returns success whether or not the email exists (no account enumeration).
+  if (!res.ok && res.status !== 422) return forgotRequestScreen(t("serverError") + " (" + res.status + ")", email);
+  forgotResetScreen(email, "", t("codeSent"));
+}
+
+async function submitReset() {
+  const email = (document.getElementById("rp_email")?.value || "").trim();
+  const token = (document.getElementById("rp_code")?.value || "").trim();
+  const password = document.getElementById("rp_pw")?.value || "";
+  if (!email || !token || !password) return;
+  if (password.length < 6) return forgotResetScreen(email, t("pwTooShort"));
+  // 1) verify the emailed code -> a fresh session
+  let vres;
+  try {
+    vres = await fetch(SB + "/auth/v1/verify", {
+      method: "POST", headers: { apikey: ANON, "content-type": "application/json" },
+      body: JSON.stringify({ type: "recovery", email, token }),
+    });
+  } catch (e) { return forgotResetScreen(email, t("noConn")); }
+  if (!vres.ok) return forgotResetScreen(email, t("badResetCode"));
+  const s = await vres.json();
+  // 2) set the new password using that session
+  try {
+    const ures = await fetch(SB + "/auth/v1/user", {
+      method: "PUT",
+      headers: { apikey: ANON, Authorization: "Bearer " + s.access_token, "content-type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
+    if (!ures.ok) return forgotResetScreen(email, t("serverError") + " (" + ures.status + ")");
+  } catch (e) { return forgotResetScreen(email, t("noConn")); }
+  // 3) already signed in with the fresh session — straight into the dashboard
+  session = { access_token: s.access_token, refresh_token: s.refresh_token };
+  await load(true);
+}
+
+async function signIn() {
+  const email = (document.getElementById("email")?.value || "").trim();
+  const password = document.getElementById("password")?.value || "";
+  if (!email || !password) return;
+  let res;
+  try {
+    res = await fetch(SB + "/auth/v1/token?grant_type=password", {
+      method: "POST",
+      headers: { apikey: ANON, "content-type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+  } catch (e) { return loginScreen(t("noConn")); }
+  if (!res.ok) return loginScreen(t("badCreds"));
+  const s = await res.json();
+  session = { access_token: s.access_token, refresh_token: s.refresh_token };
+  await load(true);
+}
+
+// Swap an expired access token for a fresh one using the refresh token. Returns success.
+async function refreshSession() {
+  if (!session?.refresh_token) return false;
+  try {
+    const res = await fetch(SB + "/auth/v1/token?grant_type=refresh_token", {
+      method: "POST", headers: { apikey: ANON, "content-type": "application/json" },
+      body: JSON.stringify({ refresh_token: session.refresh_token }),
+    });
+    if (!res.ok) return false;
+    const s = await res.json();
+    session = { access_token: s.access_token, refresh_token: s.refresh_token };
+    return true;
+  } catch (e) { return false; }
+}
+
+async function load(fromLogin, retried) {
+  if (!session) return loginScreen();
+  if (fromLogin) app.innerHTML = `<div id="loading">${t("loading")}</div>`;
+  let res;
+  try {
+    res = await fetch(API, {
+      method: "POST",
+      headers: { apikey: ANON, Authorization: "Bearer " + session.access_token, "content-type": "application/json" },
+      body: JSON.stringify({}),
+    });
+  } catch (e) {
+    if (fromLogin) loginScreen(t("noConn"));
+    return;
+  }
+  if (res.status === 401) {
+    // access token likely expired — try one silent refresh, else send back to login
+    if (!retried && await refreshSession()) return load(fromLogin, true);
+    session = null; stopTimer(); return loginScreen(t("badCreds"));
+  }
+  if (res.status === 403) { session = null; stopTimer(); return loginScreen(t("noAccess")); }
+  if (!res.ok) { if (fromLogin) loginScreen(t("serverError") + " (" + res.status + ")"); return; }
+  data = await res.json();
+  // default selected tab = worst client
+  if (!selectedCode || !data.clients.some(c => c.call_center_code === selectedCode)) {
+    const sorted = sortedClients();
+    selectedCode = sorted.length ? sorted[0].call_center_code : null;
+  }
+  startTimer();
+  render();
+}
+
+function sortedClients() {
+  return [...(data.clients || [])].sort((a, b) => {
+    const ra = rollup(a), rb = rollup(b);
+    if (rb.attention !== ra.attention) return rb.attention - ra.attention; // most attention first
+    return ra.online - rb.online;
+  });
+}
+
+function render() {
+  applyLang();
+  const isMaster = data.role === "master";
+  const clients = data.clients || [];
+  const sorted = sortedClients();
+
+  const header = `<header class="top"><h1>Shareek</h1>
+    <span class="sub">${t("title")} · ${t("subtitle")} ${fmtTime(data.generated_at)}</span>
+    <div class="langtoggle">
+      <button class="${lang === "ar" ? "active" : ""}" onclick="setLang('ar')">العربية</button>
+      <button class="${lang === "en" ? "active" : ""}" onclick="setLang('en')">English</button>
+    </div>
+    ${!adminMode ? `<button onclick="load()">${t("refresh")}</button>` : ""}
+    ${isMaster ? (adminMode
+      ? `<button class="ghost" onclick="closeAccounts()">${t("backToHealth")}</button>`
+      : `<button class="ghost" onclick="openAccounts()">${t("accounts")}</button>`) : ""}
+    <button class="ghost" onclick="logout()">${t("logout")}</button>
+  </header>`;
+
+  if (adminMode && isMaster) {
+    app.innerHTML = header + `<div class="wrap">${adminPanel()}</div>`;
+    return;
+  }
+
+  if (!clients.length) {
+    app.innerHTML = header + `<div class="wrap"><div class="empty">${t("noClients")}</div></div>`;
+    return;
+  }
+
+  let body = "";
+
+  if (isMaster) {
+    // overview cards (clickable) + tab bar
+    const cards = sorted.map(c => {
+      const r = rollup(c);
+      const light = r.attention ? RED : GREEN;
+      const name = c.display_name || c.call_center_code;
+      return `<div class="ccard ${c.call_center_code === selectedCode ? "sel" : ""}"
+        onclick="selectClient('${esc(c.call_center_code)}')">
+        <div class="name">${dot(light)}${esc(name)}</div>
+        <div class="row"><span>${t("onlineWord")}</span><span>${r.online}/${r.active} ${t("phonesWord")}</span></div>
+        <div class="row"><span>${t("needAttention")}</span>
+          <span class="${r.attention ? "att" : "clean"}">${r.attention || t("allGood")}</span></div>
+      </div>`;
+    }).join("");
+
+    const tabs = sorted.map(c => {
+      const r = rollup(c);
+      const name = c.display_name || c.call_center_code;
+      return `<button class="${c.call_center_code === selectedCode ? "active" : ""}"
+        onclick="selectClient('${esc(c.call_center_code)}')">${esc(name)}${r.attention
+          ? `<span class="badge">${r.attention}</span>` : ""}</button>`;
+    }).join("");
+
+    const sel = clients.find(c => c.call_center_code === selectedCode);
+    body = `<div class="wrap">
+      <h2>${t("clients")}</h2>
+      <div class="overview">${cards}</div>
+      <div class="tabs">${tabs}</div>
+      ${sel ? clientSection(sel) : ""}
+    </div>`;
+  } else {
+    // supervisor: just their one client
+    body = `<div class="wrap">${clientSection(clients[0])}</div>`;
+  }
+
+  app.innerHTML = header + body;
+}
+
+function clientSection(c) {
+  const r = rollup(c);
+  const name = c.display_name || c.call_center_code;
+  return `<h2>${esc(name)}${r.attention
+    ? ` — <span class="att">${r.attention} ${t("needAttention")}</span>` : ""}</h2>
+    <p class="note">${t("note")}</p>
+    ${phoneTable(c)}`;
+}
+
+// ---- controls ----------------------------------------------------------------
+function selectClient(cc) { selectedCode = cc; render(); }
+function logout() { session = null; data = null; selectedCode = null; stopTimer(); loginScreen(); }
+function startTimer() { stopTimer(); timer = setInterval(() => { if (session) load(); }, REFRESH_MS); }
+function stopTimer() { if (timer) { clearInterval(timer); timer = null; } }
+function route() { if (session && data) render(); else loginScreen(); }
+
+// ---- Accounts panel (master only) --------------------------------------------
+function adminPanel() {
+  if (!adminData) return `<div id="loading">${t("loading")}</div>`;
+  const clients = adminData.clients || [];
+  const users = adminData.users || [];
+  const clientName = code => (clients.find(c => c.call_center_code === code)?.display_name) || code || "—";
+  const rows = users.map(u => {
+    const em = esc(u.email || "");
+    const isM = u.role === "master";
+    const scope = isM ? `<span class="sub">${t("allClientsTag")}</span>` : esc(clientName(u.call_center_code));
+    const status = u.active ? `<span class="clean">${t("statusActive")}</span>` : `<span class="att">${t("statusDisabled")}</span>`;
+    return `<tr>
+      <td>${em}</td>
+      <td>${isM ? t("roleMaster") : t("roleSupervisor")}</td>
+      <td>${scope}</td>
+      <td>${status}</td>
+      <td class="acts">
+        <button onclick="resetPw('${em}')">${t("resetBtn")}</button>
+        <button onclick="toggleActive('${em}',${u.active ? "false" : "true"})">${u.active ? t("disableBtn") : t("enableBtn")}</button>
+        <button class="danger" onclick="delUser('${em}')">${t("deleteBtn")}</button>
+      </td></tr>`;
+  }).join("");
+  const opts = clients.map(c => `<option value="${esc(c.call_center_code)}">${esc(c.display_name || c.call_center_code)}</option>`).join("");
+  return `
+    <h2>${t("accountsTitle")}</h2>
+    ${adminMsg ? `<p class="note" style="color:var(--gGreen);font-weight:600">${esc(adminMsg)}</p>` : ""}
+    <div class="scroll"><table>
+      <tr><th>${t("colEmail")}</th><th>${t("colRole")}</th><th>${t("colClient")}</th><th>${t("colActive")}</th><th></th></tr>
+      ${rows}</table></div>
+    <h2>${t("addTitle")}</h2>
+    <div class="addform">
+      <input id="nu_email" type="email" autocomplete="off" placeholder="${t("phEmail")}">
+      <input id="nu_pw" type="text" autocomplete="off" placeholder="${t("phPassword")}">
+      <select id="nu_client"><option value="">${t("pickClient")}</option>${opts}</select>
+      <button onclick="addUser()">${t("addBtn")}</button>
+    </div>`;
+}
+
+async function adminCall(payload, retried) {
+  let res;
+  try {
+    res = await fetch(ADMIN_API, {
+      method: "POST",
+      headers: { apikey: ANON, Authorization: "Bearer " + session.access_token, "content-type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  } catch (e) { return { ok: false, j: { error: t("noConn") } }; }
+  if (res.status === 401 && !retried && await refreshSession()) return adminCall(payload, true);
+  const j = await res.json().catch(() => ({}));
+  return { ok: res.ok, status: res.status, j };
+}
+
+async function openAccounts() { adminMode = true; adminData = null; adminMsg = ""; render();
+  const { ok, j } = await adminCall({ action: "list" });
+  if (ok) adminData = j; else adminMsg = j.error || t("serverError");
+  render();
+}
+function closeAccounts() { adminMode = false; adminMsg = ""; render(); }
+async function refreshAdmin() { const { ok, j } = await adminCall({ action: "list" }); if (ok) adminData = j; render(); }
+
+async function addUser() {
+  const email = (document.getElementById("nu_email")?.value || "").trim();
+  const password = document.getElementById("nu_pw")?.value || "";
+  const code = document.getElementById("nu_client")?.value || "";
+  if (!email || !password) return;
+  adminMsg = t("saving"); render();
+  const { ok, j } = await adminCall({ action: "add_user", email, password, call_center_code: code, role: "supervisor" });
+  adminMsg = ok ? (j.created ? t("doneCreated") : t("doneUpdated")) : (j.error || t("serverError"));
+  await refreshAdmin();
+}
+async function resetPw(email) {
+  const pw = prompt(t("newPwPrompt") + " " + email + ":");
+  if (!pw) return;
+  adminMsg = t("saving"); render();
+  const { ok, j } = await adminCall({ action: "set_password", email, password: pw });
+  adminMsg = ok ? t("doneSaved") : (j.error || t("serverError")); render();
+}
+async function toggleActive(email, active) {
+  adminMsg = t("saving"); render();
+  const { ok, j } = await adminCall({ action: "set_active", email, active });
+  adminMsg = ok ? t("doneSaved") : (j.error || t("serverError")); await refreshAdmin();
+}
+async function delUser(email) {
+  if (!confirm(t("confirmDelete") + " " + email)) return;
+  adminMsg = t("saving"); render();
+  const { ok, j } = await adminCall({ action: "delete_user", email });
+  adminMsg = ok ? t("doneSaved") : (j.error || t("serverError")); await refreshAdmin();
+}
+
+applyLang();
+loginScreen();
+</script>
+</body>
+</html>
