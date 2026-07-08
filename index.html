@@ -118,6 +118,9 @@ const T = {
     addBtn:"Create", resetBtn:"Reset password", disableBtn:"Disable", enableBtn:"Enable", deleteBtn:"Delete",
     newPwPrompt:"New password for", confirmDelete:"Delete this login?", saving:"Saving…",
     doneCreated:"Account created.", doneUpdated:"Account updated.", doneSaved:"Saved.", allClientsTag:"all clients",
+    clientsTitle:"Clients (call centers)", colCode:"Code", colName:"Name", colPhones:"Phones",
+    renameBtn:"Rename", deactivateBtn:"Deactivate", activateBtn:"Activate",
+    renamePrompt:"Display name for", inactiveTag:"inactive", doneRenamed:"Renamed.",
     hours:"h", minutes:"m", days:"d",
   },
   ar: {
@@ -147,6 +150,9 @@ const T = {
     addBtn:"إنشاء", resetBtn:"تغيير كلمة المرور", disableBtn:"إيقاف", enableBtn:"تفعيل", deleteBtn:"حذف",
     newPwPrompt:"كلمة مرور جديدة لـ", confirmDelete:"حذف هذا الحساب؟", saving:"جاري الحفظ…",
     doneCreated:"تم إنشاء الحساب.", doneUpdated:"تم تحديث الحساب.", doneSaved:"تم الحفظ.", allClientsTag:"كل المراكز",
+    clientsTitle:"المراكز (مراكز الاتصال)", colCode:"الرمز", colName:"الاسم", colPhones:"الأجهزة",
+    renameBtn:"إعادة تسمية", deactivateBtn:"إيقاف", activateBtn:"تفعيل",
+    renamePrompt:"اسم العرض لـ", inactiveTag:"موقوف", doneRenamed:"تمت إعادة التسمية.",
     hours:"س", minutes:"د", days:"ي",
   },
 };
@@ -565,6 +571,21 @@ function adminPanel() {
       </td></tr>`;
   }).join("");
   const opts = clients.map(c => `<option value="${esc(c.call_center_code)}">${esc(c.display_name || c.call_center_code)}</option>`).join("");
+  const clientRows = clients.map(c => {
+    const active = c.active !== false;
+    const cc = esc(c.call_center_code);
+    const nm = c.display_name ? esc(c.display_name) : `<span class="sub">—</span>`;
+    const status = active ? `<span class="clean">${t("statusActive")}</span>` : `<span class="att">${t("inactiveTag")}</span>`;
+    return `<tr class="${active ? "" : "muted"}">
+      <td>${nm}</td>
+      <td><span class="sub">${cc}</span></td>
+      <td>${c.phone_count ?? 0}</td>
+      <td>${status}</td>
+      <td class="acts">
+        <button onclick="renameClient('${cc}')">${t("renameBtn")}</button>
+        <button onclick="toggleClient('${cc}',${active ? "false" : "true"})">${active ? t("deactivateBtn") : t("activateBtn")}</button>
+      </td></tr>`;
+  }).join("");
   return `
     <h2>${t("accountsTitle")}</h2>
     ${adminMsg ? `<p class="note" style="color:var(--gGreen);font-weight:600">${esc(adminMsg)}</p>` : ""}
@@ -577,7 +598,11 @@ function adminPanel() {
       <input id="nu_pw" type="text" autocomplete="off" placeholder="${t("phPassword")}">
       <select id="nu_client"><option value="">${t("pickClient")}</option>${opts}</select>
       <button onclick="addUser()">${t("addBtn")}</button>
-    </div>`;
+    </div>
+    <h2>${t("clientsTitle")}</h2>
+    <div class="scroll"><table>
+      <tr><th>${t("colName")}</th><th>${t("colCode")}</th><th>${t("colPhones")}</th><th>${t("colActive")}</th><th></th></tr>
+      ${clientRows}</table></div>`;
 }
 
 async function adminCall(payload, retried) {
@@ -628,6 +653,19 @@ async function delUser(email) {
   if (!confirm(t("confirmDelete") + " " + email)) return;
   adminMsg = t("saving"); render();
   const { ok, j } = await adminCall({ action: "delete_user", email });
+  adminMsg = ok ? t("doneSaved") : (j.error || t("serverError")); await refreshAdmin();
+}
+async function renameClient(code) {
+  const cur = (adminData?.clients?.find(c => c.call_center_code === code)?.display_name) || "";
+  const name = prompt(t("renamePrompt") + " " + code + ":", cur);
+  if (name === null) return;
+  adminMsg = t("saving"); render();
+  const { ok, j } = await adminCall({ action: "rename_client", call_center_code: code, display_name: name });
+  adminMsg = ok ? t("doneRenamed") : (j.error || t("serverError")); await refreshAdmin();
+}
+async function toggleClient(code, active) {
+  adminMsg = t("saving"); render();
+  const { ok, j } = await adminCall({ action: "set_client_active", call_center_code: code, active });
   adminMsg = ok ? t("doneSaved") : (j.error || t("serverError")); await refreshAdmin();
 }
 
