@@ -121,6 +121,9 @@ const T = {
     clientsTitle:"Clients (call centers)", colCode:"Code", colName:"Name", colPhones:"Phones",
     renameBtn:"Rename", deactivateBtn:"Deactivate", activateBtn:"Activate",
     renamePrompt:"Display name for", inactiveTag:"inactive", doneRenamed:"Renamed.",
+    addClientTitle:"Add a client", phClientCode:"call center code (exact, as sent by the phone)", phClientName:"display name (optional)",
+    addClientBtn:"Add client", confirmDeleteClient:"Delete this client? This only works if it has no phones or logins left.",
+    doneAdded:"Client added.", doneDeleted:"Client deleted.",
     hours:"h", minutes:"m", days:"d",
   },
   ar: {
@@ -153,6 +156,9 @@ const T = {
     clientsTitle:"المراكز (مراكز الاتصال)", colCode:"الرمز", colName:"الاسم", colPhones:"الأجهزة",
     renameBtn:"إعادة تسمية", deactivateBtn:"إيقاف", activateBtn:"تفعيل",
     renamePrompt:"اسم العرض لـ", inactiveTag:"موقوف", doneRenamed:"تمت إعادة التسمية.",
+    addClientTitle:"إضافة مركز", phClientCode:"رمز مركز الاتصال (بالضبط كما يرسله الجهاز)", phClientName:"اسم العرض (اختياري)",
+    addClientBtn:"إضافة المركز", confirmDeleteClient:"حذف هذا المركز؟ يعمل هذا فقط إذا لم تعد فيه أجهزة أو حسابات دخول.",
+    doneAdded:"تمت إضافة المركز.", doneDeleted:"تم حذف المركز.",
     hours:"س", minutes:"د", days:"ي",
   },
 };
@@ -584,6 +590,7 @@ function adminPanel() {
       <td class="acts">
         <button onclick="renameClient('${cc}')">${t("renameBtn")}</button>
         <button onclick="toggleClient('${cc}',${active ? "false" : "true"})">${active ? t("deactivateBtn") : t("activateBtn")}</button>
+        <button class="danger" onclick="deleteClient('${cc}')">${t("deleteBtn")}</button>
       </td></tr>`;
   }).join("");
   return `
@@ -602,7 +609,13 @@ function adminPanel() {
     <h2>${t("clientsTitle")}</h2>
     <div class="scroll"><table>
       <tr><th>${t("colName")}</th><th>${t("colCode")}</th><th>${t("colPhones")}</th><th>${t("colActive")}</th><th></th></tr>
-      ${clientRows}</table></div>`;
+      ${clientRows}</table></div>
+    <h2>${t("addClientTitle")}</h2>
+    <div class="addform">
+      <input id="nc_code" type="text" autocomplete="off" placeholder="${t("phClientCode")}">
+      <input id="nc_name" type="text" autocomplete="off" placeholder="${t("phClientName")}">
+      <button onclick="addClient()">${t("addClientBtn")}</button>
+    </div>`;
 }
 
 async function adminCall(payload, retried) {
@@ -667,6 +680,20 @@ async function toggleClient(code, active) {
   adminMsg = t("saving"); render();
   const { ok, j } = await adminCall({ action: "set_client_active", call_center_code: code, active });
   adminMsg = ok ? t("doneSaved") : (j.error || t("serverError")); await refreshAdmin();
+}
+async function addClient() {
+  const code = (document.getElementById("nc_code")?.value || "").trim();
+  const name = (document.getElementById("nc_name")?.value || "").trim();
+  if (!code) return;
+  adminMsg = t("saving"); render();
+  const { ok, j } = await adminCall({ action: "add_client", call_center_code: code, display_name: name });
+  adminMsg = ok ? t("doneAdded") : (j.error || t("serverError")); await refreshAdmin();
+}
+async function deleteClient(code) {
+  if (!confirm(t("confirmDeleteClient") + " (" + code + ")")) return;
+  adminMsg = t("saving"); render();
+  const { ok, j } = await adminCall({ action: "delete_client", call_center_code: code });
+  adminMsg = ok ? t("doneDeleted") : (j.error || t("serverError")); await refreshAdmin();
 }
 
 applyLang();
