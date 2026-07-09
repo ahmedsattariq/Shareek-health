@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Shareek — Recording Health</title>
+<title>Shareek — Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Cairo:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root { --navy:#0D1B2A; --cream:#E8E6DD; --cream2:#D3D1C7; --green:#4CAF7D;
@@ -14,7 +14,12 @@ body { margin:0; background:var(--cream); color:var(--navy); font-family:Poppins
 h1,h2 { font-weight:700; }
 .wrap { max-width:1100px; margin:0 auto; padding:16px; }
 header.top { background:var(--navy); color:var(--cream); padding:14px 20px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-header.top h1 { margin:0; font-size:22px; }
+header.top h1 { margin:0; font-size:22px; display:flex; align-items:center; gap:9px; }
+.brand-logo { display:inline-block; vertical-align:middle; }
+header.top .brand-logo { height:30px; width:auto; }
+.login .brand-box { display:inline-flex; align-items:center; gap:10px; background:var(--navy); color:var(--cream); border-radius:14px; padding:11px 22px; margin:0 auto 16px; }
+.login .brand-box .brand-logo { height:34px; width:auto; margin:0; }
+.login .brand-box span { font-size:24px; font-weight:700; line-height:1; }
 header.top span.sub { opacity:.7; font-size:13px; flex:1; }
 header.top button { background:var(--green); color:#fff; border:0; border-radius:8px; padding:8px 16px; font-weight:600; cursor:pointer; font-size:13px; font-family:inherit; }
 header.top button.ghost { background:transparent; border:1px solid rgba(255,255,255,.35); }
@@ -166,8 +171,8 @@ const REFRESH_MS = 5 * 60 * 1000; // manual button + auto every 5 minutes (see p
 // ---- language: one page, two languages, no mixing. Default = Arabic. ----
 const T = {
   en: {
-    title:"Recording Health", subtitle:"Baghdad time · updated", refresh:"Refresh", logout:"Log out",
-    loginTitle:"Recording Health", loginHint:"Sign in to continue",
+    title:"Dashboard", subtitle:"Baghdad time · updated", refresh:"Refresh", logout:"Log out",
+    loginTitle:"Dashboard", loginHint:"Sign in to continue",
     emailLabel:"Email", passwordLabel:"Password", loginBtn:"Sign in",
     loading:"Loading…", noConn:"No connection — check internet and try again.", serverError:"Server error",
     badCreds:"Wrong email or password.", noAccess:"This account has no dashboard access.",
@@ -185,7 +190,7 @@ const T = {
     stPaused:"Paused", stRetired:"Retired",
     never:"never", ago:"ago", lastSeen:"last seen", emptyPhones:"No phones in this client yet.",
     note:"<b>Green</b> = recording & healthy. <b>Red</b> = follow up: <i>Offline</i> (phone off / no internet), <i>Went dark</i> (no check-in for a day — likely off or app removed), <i>Not recording</i> (Shizuku off), low <i>battery</i> (&lt;15% unplugged) or nearly-full <i>storage</i> (&lt;300 MB). 🔌 = charging. Grey = paused.",
-    accounts:"Accounts", backToHealth:"← Back to health", accountsTitle:"Dashboard logins",
+    accounts:"Accounts", backToHealth:"← Back to dashboard", accountsTitle:"Dashboard logins",
     colEmail:"Email", colRole:"Role", colClient:"Client", colActive:"Status",
     roleMaster:"Master", roleAdmin:"Admin", roleSupervisor:"Supervisor", statusActive:"active", statusDisabled:"disabled",
     addTitle:"Add a supervisor login", phEmail:"email", phPassword:"password (min 6)", pickClient:"— choose client —",
@@ -232,8 +237,8 @@ const T = {
     dow:["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
   },
   ar: {
-    title:"صحة التسجيل", subtitle:"توقيت بغداد · آخر تحديث", refresh:"تحديث", logout:"خروج",
-    loginTitle:"صحة التسجيل", loginHint:"سجّل الدخول للمتابعة",
+    title:"لوحة المعلومات", subtitle:"توقيت بغداد · آخر تحديث", refresh:"تحديث", logout:"خروج",
+    loginTitle:"لوحة المعلومات", loginHint:"سجّل الدخول للمتابعة",
     emailLabel:"البريد الإلكتروني", passwordLabel:"كلمة المرور", loginBtn:"دخول",
     loading:"جاري التحميل…", noConn:"لا يوجد اتصال — تحقق من الإنترنت وحاول مرة أخرى.", serverError:"خطأ في الخادم",
     badCreds:"بريد إلكتروني أو كلمة مرور غير صحيحة.", noAccess:"هذا الحساب لا يملك صلاحية الدخول للوحة.",
@@ -251,7 +256,7 @@ const T = {
     stPaused:"موقوف", stRetired:"متقاعد",
     never:"أبداً", ago:"منذ", lastSeen:"آخر ظهور", emptyPhones:"لا توجد أجهزة في هذا المركز بعد.",
     note:"<b>أخضر</b> = يسجّل وسليم. <b>أحمر</b> = يحتاج متابعة: <i>غير متصل</i> (الجهاز مطفأ أو لا إنترنت)، <i>انقطع</i> (لا اتصال منذ يوم — غالباً مطفأ أو حُذف التطبيق)، <i>لا يسجّل</i> (Shizuku متوقف)، <i>بطارية</i> منخفضة (أقل من 15% وغير موصول) أو <i>تخزين</i> شبه ممتلئ (أقل من 300 ميغابايت). 🔌 = يشحن. رمادي = موقوف.",
-    accounts:"الحسابات", backToHealth:"← رجوع للصحة", accountsTitle:"حسابات الدخول",
+    accounts:"الحسابات", backToHealth:"← رجوع للوحة", accountsTitle:"حسابات الدخول",
     colEmail:"البريد", colRole:"الدور", colClient:"المركز", colActive:"الحالة",
     roleMaster:"مدير", roleAdmin:"مسؤول", roleSupervisor:"مشرف", statusActive:"مفعّل", statusDisabled:"موقوف",
     addTitle:"إضافة حساب مشرف", phEmail:"البريد الإلكتروني", phPassword:"كلمة المرور (٦ على الأقل)", pickClient:"— اختر المركز —",
@@ -339,6 +344,12 @@ function ago(iso) {
 const app = document.getElementById("app");
 const GREEN = "var(--gGreen)", AMBER = "var(--gAmber)", RED = "var(--gRed)", GREY = "var(--grey)";
 const dot = c => `<span class="dot" style="background:${c}"></span>`;
+// Shareek "S"-mark (matches the Android app logo); inherits surrounding text colour via currentColor.
+const LOGO = `<svg class="brand-logo" viewBox="0 0 34 44" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <path d="M11,34 C24,34 24,22 17,22 C10,22 10,10 23,10" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/>
+  <circle cx="23" cy="10" r="3.4" fill="currentColor"/>
+  <circle cx="11" cy="34" r="3.4" fill="currentColor"/>
+</svg>`;
 
 // runtime state
 let session = null;     // { access_token, refresh_token } — kept in memory only (never stored)
@@ -427,7 +438,7 @@ function phoneTable(client) {
 function loginScreen(err) {
   applyLang();
   app.innerHTML = `<div class="login">
-    <h1>Shareek</h1>
+    <div class="brand-box">${LOGO}<span>Shareek</span></div>
     <p>${t("loginTitle")} · ${t("loginHint")}</p>
     <input id="email" type="email" autocomplete="username" placeholder="${t("emailLabel")}"
       onkeydown="if(event.key==='Enter')signIn()">
@@ -448,7 +459,7 @@ function loginScreen(err) {
 function forgotRequestScreen(err, email) {
   applyLang();
   app.innerHTML = `<div class="login">
-    <h1>Shareek</h1>
+    <div class="brand-box">${LOGO}<span>Shareek</span></div>
     <p>${t("forgotTitle")} · ${t("forgotHint")}</p>
     <input id="fp_email" type="email" autocomplete="username" placeholder="${t("emailLabel")}"
       value="${esc(email || "")}" onkeydown="if(event.key==='Enter')sendResetCode()">
@@ -466,7 +477,7 @@ function forgotRequestScreen(err, email) {
 function forgotResetScreen(email, err, info) {
   applyLang();
   app.innerHTML = `<div class="login">
-    <h1>Shareek</h1>
+    <div class="brand-box">${LOGO}<span>Shareek</span></div>
     <p>${t("resetTitle")}</p>
     ${info ? `<p class="info">${esc(info)}</p>` : ""}
     <input id="rp_email" type="email" value="${esc(email || "")}" readonly style="opacity:.7">
@@ -617,7 +628,7 @@ function render() {
   const clients = data.clients || [];
   const sorted = sortedClients();
 
-  const header = `<header class="top"><h1>Shareek</h1>
+  const header = `<header class="top"><h1>${LOGO}Shareek</h1>
     <span class="sub">${t("title")} · ${t("subtitle")} ${fmtTime(data.generated_at)}</span>
     <div class="langtoggle">
       <button class="${lang === "ar" ? "active" : ""}" onclick="setLang('ar')">العربية</button>
