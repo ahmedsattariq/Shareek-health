@@ -73,32 +73,78 @@ td.acts { white-space:nowrap; }
 td.acts button { background:var(--navy); color:var(--cream); border:0; border-radius:7px; padding:5px 10px; font-size:12px; font-weight:600; cursor:pointer; font-family:inherit; margin-inline-end:5px; }
 td.acts button.danger { background:#c0392b; color:#fff; }
 
-/* ---- analytics (ported from dashboard.html) ---- */
-.cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px; margin:16px 0; }
-.agent { background:#fff; border-radius:12px; padding:14px 16px; box-shadow:0 1px 4px rgba(13,27,42,.12); }
-.agent b { font-size:16px; }
-.agent .row { display:flex; justify-content:space-between; font-size:13px; margin-top:6px; }
-.agent .row span:last-child { font-weight:600; }
-.ok { color:var(--green); font-weight:700; } .bad { color:#c0392b; font-weight:700; }
-.pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:600; }
-.pill.sim { background:var(--cream2); } .pill.wa { background:#d9f2e4; color:#1d7a4d; }
-audio { height:30px; max-width:230px; }
+/* ---- CEO analytics dashboard ---- */
+.ok { color:var(--gGreen); font-weight:700; } .bad { color:#c0392b; font-weight:700; }
 .score { display:inline-block; min-width:34px; text-align:center; padding:2px 7px; border-radius:8px; font-weight:700; font-size:12px; color:#fff; }
+.a-note { font-size:12px; color:#666; margin:2px 0 14px; }
+.card { background:#fff; border-radius:12px; box-shadow:0 1px 4px rgba(13,27,42,.12); }
+.section { margin-bottom:26px; }
+.section > h3 { font-size:15px; margin:0 0 10px; }
+
+/* KPI tiles */
+.kpis { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:12px; margin:8px 0 22px; }
+.kpi { background:#fff; border-radius:12px; padding:14px 16px; box-shadow:0 1px 4px rgba(13,27,42,.12); border-inline-start:4px solid var(--green); }
+.kpi .k-label { font-size:12px; color:#667; }
+.kpi .k-val { font-size:26px; font-weight:700; margin-top:4px; line-height:1.1; }
+.kpi .k-sub { font-size:11px; color:#8a8f98; margin-top:3px; }
+.kpi .k-sub.up { color:var(--gGreen); } .kpi .k-sub.down { color:var(--gRed); }
+
+/* action points */
+.acts-list { display:flex; flex-direction:column; gap:10px; }
+.act { background:#fff; border-radius:12px; padding:12px 14px; box-shadow:0 1px 4px rgba(13,27,42,.12);
+  border-inline-start:5px solid var(--grey); display:flex; gap:12px; align-items:flex-start; }
+.act.red { border-inline-start-color:var(--gRed); }
+.act.amber { border-inline-start-color:var(--gAmber); }
+.act.info { border-inline-start-color:#2f6fd6; }
+.act .a-ico { font-size:20px; line-height:1; margin-top:1px; }
+.act .a-body { flex:1; }
+.act .a-title { font-weight:700; font-size:14px; }
+.act .a-ctx { font-size:12px; color:#667; margin-top:2px; }
+.act .a-do { font-size:12px; margin-top:6px; }
+.act .a-do b { color:var(--navy); }
+.act-badge { display:inline-block; font-size:10px; font-weight:700; padding:2px 8px; border-radius:999px; color:#fff; white-space:nowrap; }
+.act-badge.red { background:var(--gRed); } .act-badge.amber { background:var(--gAmber); } .act-badge.info { background:#2f6fd6; }
+
+/* employee scorecards */
+.emp-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; }
+.emp { background:#fff; border-radius:12px; padding:14px 16px; box-shadow:0 1px 4px rgba(13,27,42,.12); }
+.emp .e-top { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+.emp .e-name { font-weight:700; font-size:15px; } .emp .e-name .sub { display:block; }
+.emp .e-rank { font-size:11px; color:#8a8f98; }
+.crit { margin-top:10px; }
+.crit .c-row { display:flex; align-items:center; gap:8px; font-size:12px; margin-top:5px; }
+.crit .c-lbl { flex:0 0 42%; color:#556; }
+.crit .c-bar { flex:1; height:8px; background:var(--cream2); border-radius:999px; overflow:hidden; }
+.crit .c-fill { height:100%; border-radius:999px; }
+.crit .c-num { flex:0 0 26px; text-align:end; font-weight:700; }
+.emp .e-foot { display:flex; justify-content:space-between; font-size:12px; margin-top:11px; padding-top:9px; border-top:1px solid var(--cream2); }
+.trend-up { color:var(--gGreen); font-weight:700; } .trend-dn { color:var(--gRed); font-weight:700; }
+.coach { font-size:11px; color:#667; margin-top:8px; }
+.coach b { color:var(--navy); }
+
+/* generic bars / lists */
+.hbar-row { display:flex; align-items:center; gap:10px; font-size:13px; margin:7px 0; }
+.hbar-lbl { flex:0 0 34%; }
+.hbar-track { flex:1; height:14px; background:var(--cream2); border-radius:999px; overflow:hidden; }
+.hbar-fill { height:100%; background:var(--gGreen); border-radius:999px; }
+.hbar-val { flex:0 0 auto; font-weight:600; min-width:38px; text-align:end; }
+.chips { display:flex; flex-wrap:wrap; gap:7px; }
+.chip { background:var(--cream); border:1px solid var(--cream2); border-radius:999px; padding:4px 11px; font-size:12px; }
+.chip b { color:var(--navy); }
+
+/* charts */
+.chart-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:16px; }
+.chart-box { background:#fff; border-radius:12px; padding:14px 16px; box-shadow:0 1px 4px rgba(13,27,42,.12); }
+.chart-box h3 { font-size:14px; margin:0 0 10px; }
+.chart-box svg { width:100%; height:auto; display:block; }
+.legend { display:flex; flex-wrap:wrap; gap:12px; font-size:12px; margin-top:8px; }
+.legend span { display:inline-flex; align-items:center; gap:5px; }
+.legend i { width:11px; height:11px; border-radius:3px; display:inline-block; }
+.heat { display:grid; gap:3px; }
+.heat .h-cell { height:22px; border-radius:4px; }
+.pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:600; background:var(--cream2); }
 .pill.sent-happy { background:#d9f2e4; color:#1d7a4d; } .pill.sent-neutral { background:var(--cream2); }
-.pill.sent-frustrated { background:#fbe0dd; color:#c0392b; }
-.pill.lead { background:#e6ecf5; color:#274b7a; }
-.pill.noans { background:#fbe0dd; color:#c0392b; }
-tr.no-answer td { background:#fcf4f3; }
-body.hide-no-answer tr.no-answer { display:none; }
-.toggle { font-size:12px; color:#666; display:inline-flex; align-items:center; gap:6px; margin:0 0 10px; cursor:pointer; }
-.topics { color:#555; font-size:11px; }
-details.insight { margin-top:5px; }
-details.insight summary { cursor:pointer; font-size:12px; color:#274b7a; font-weight:600; }
-details.insight .body { margin-top:6px; font-size:12px; }
-details.insight .body b { display:block; margin-top:6px; }
-details.insight ul { margin:4px 0; padding-inline-start:18px; }
-.transcript { direction:rtl; text-align:right; white-space:pre-wrap; background:#f6f5f0; border-radius:8px;
-  padding:8px 10px; max-height:220px; overflow:auto; font-size:12px; line-height:1.5; }
+.pill.sent-upset { background:#fbe0dd; color:#c0392b; }
 </style>
 </head>
 <body>
@@ -154,26 +200,36 @@ const T = {
     confirmForceDeleteClient:"This client still has phones in its roster. Delete it anyway and remove those phones too? (Already-uploaded recordings are not affected — if the phones are still active they'll just reappear on their next check-in.)",
     doneAdded:"Client added.", doneDeleted:"Client deleted.",
     hours:"h", minutes:"m", days:"d",
-    analytics:"Analytics", colAgent:"Agent",
-    agents:"Agents", cRecorded:"Recorded calls", cTalk:"Talk time", cScore:"Avg call score",
-    cConv:"Lead conversion", cCapture:"Capture check", cMissed:"Missed calls", cCalledBack:"Called back",
-    okSuffix:"ok", emptyAgents:"No data yet — install the app and make a call",
-    recordedCalls:"Recorded calls",
-    noteRecs:"Quality = loudness before → after cleanup (closer to 0 is louder). Play buttons work for 1 hour, then Refresh.",
-    hideNoAnswer:"Hide no-answer attempts",
-    colWhen:"When", colLength:"Length", colType:"Type", colCapture:"Capture", colQuality:"Quality",
-    colInsights:"Insights", colListen:"Listen",
-    captureOk:"✓ ok", captureSilent:"✗ silent", waitingCleanup:"waiting for cleanup",
-    rawNotClean:"raw (not cleaned yet)", emptyRecs:"No recordings yet",
-    analyzing:"analyzing…", transcribing:"transcribing…", noAnswerPill:"☎ called — no answer",
-    check:"Check", details:"Details", coaching:"Coaching", summary:"Summary", transcript:"Transcript",
-    missed:"Missed calls",
-    noteMissed:"WhatsApp misses show the contact name (WhatsApp hides numbers). Callback tracking is for SIM calls.",
-    colChannel:"Channel", colFrom:"From", colCalledBackQ:"Called back?",
-    hiddenNumber:"hidden number", unknown:"unknown",
-    callbackAfterPre:"✓ after", callbackNot:"✗ not yet", emptyMissed:"No missed calls yet",
-    minUnit:"min", sentHappy:"🙂 happy", sentNeutral:"😐 neutral", sentUpset:"😠 upset",
-    leadInterested:"interested", leadFollowup:"follow-up", leadClosed:"closed", leadNotInterested:"not interested",
+    analytics:"Analytics", placeholderNote:"Sample data — real numbers appear once the AI pipeline is connected.",
+    // sub-tab names
+    tabOverview:"Overview", tabActions:"Action points", tabEmployees:"Employees", tabRisk:"Risk & churn",
+    tabVoice:"Customer voice", tabTrends:"Trends", tabClients:"Clients",
+    // KPIs
+    kTotalCalls:"Total calls", kAnswerRate:"Answer rate", kConversion:"Conversion", kQuality:"Avg quality score",
+    kHappy:"Happy customers", kRecovery:"Missed-call recovery", kHandle:"Avg handle time", kAgents:"Active agents",
+    kThisWeek:"this week", vsLast:"vs last week",
+    // action points
+    actionsTitle:"What to act on now", actNow:"Act now", actWeek:"This week", actInfo:"Opportunity",
+    topActions:"Top priorities", seeAll:"See all action points →", emptyActions:"Nothing needs attention — all clear.",
+    // employees
+    empTitle:"Employee scorecards", empNote:"Scored against placeholder criteria — you'll set real criteria per client later.",
+    eCalls:"Calls", eConv:"Conversion", eSent:"Customer sentiment", eRank:"Rank", coaching:"Coaching",
+    critGreeting:"Greeting", critDiscovery:"Needs discovery", critKnowledge:"Product knowledge",
+    critObjection:"Objection handling", critClosing:"Closing", critPoliteness:"Politeness", critScript:"Script adherence",
+    // risk & churn
+    riskTitle:"Customers at risk", riskNote:"Customers who signalled they might leave, complain, or asked for a manager.",
+    churnCustomers:"At-risk customers", complaintsBy:"Complaints by category", escalations:"Manager requests",
+    repeatCallers:"Repeat callers (unresolved)", riskSignal:"Signal", riskCustomer:"Customer",
+    // customer voice
+    voiceTitle:"What customers are telling you", topTopics:"Top topics", trending:"Trending up",
+    competitors:"Competitors mentioned", productReq:"Products / features requested", marketing:"How they heard about you",
+    // trends
+    trendsTitle:"Trends (last 14 days)", trCalls:"Call volume", trQuality:"Avg quality score",
+    trConv:"Conversion rate", peakHours:"Busiest times", peakNote:"Darker = more calls. Use it to staff your team.",
+    // clients
+    clientsTitle:"Client comparison", cCalls:"Calls", cScore:"Quality", cConv:"Conversion", cSent:"Happy", cMissed:"Missed",
+    sentHappy:"🙂 happy", sentNeutral:"😐 neutral", sentUpset:"😠 upset",
+    dow:["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
   },
   ar: {
     title:"صحة التسجيل", subtitle:"توقيت بغداد · آخر تحديث", refresh:"تحديث", logout:"خروج",
@@ -210,26 +266,36 @@ const T = {
     confirmForceDeleteClient:"لا يزال في هذا المركز أجهزة مسجّلة. هل تريد حذفه مع حذف هذه الأجهزة أيضاً؟ (التسجيلات المرفوعة مسبقاً لن تتأثر — وإذا كانت الأجهزة لا تزال نشطة فستظهر من جديد عند أول اتصال قادم.)",
     doneAdded:"تمت إضافة المركز.", doneDeleted:"تم حذف المركز.",
     hours:"س", minutes:"د", days:"ي",
-    analytics:"التحليلات", colAgent:"الوكيل",
-    agents:"الوكلاء", cRecorded:"مكالمات مسجلة", cTalk:"مدة التحدث", cScore:"متوسط تقييم المكالمة",
-    cConv:"تحويل العملاء", cCapture:"فحص التسجيل", cMissed:"مكالمات فائتة", cCalledBack:"معاودة الاتصال",
-    okSuffix:"سليم", emptyAgents:"لا توجد بيانات بعد — ثبّت التطبيق وأجرِ مكالمة",
-    recordedCalls:"المكالمات المسجلة",
-    noteRecs:"الجودة = مستوى الصوت قبل ← بعد التنقية (كلما اقترب من 0 كان أعلى). أزرار التشغيل تعمل لمدة ساعة، ثم اضغط تحديث.",
-    hideNoAnswer:"إخفاء المكالمات غير المُجابة",
-    colWhen:"الوقت", colLength:"المدة", colType:"النوع", colCapture:"الالتقاط", colQuality:"الجودة",
-    colInsights:"التحليلات", colListen:"استماع",
-    captureOk:"✓ سليم", captureSilent:"✗ صامت", waitingCleanup:"بانتظار التنقية",
-    rawNotClean:"خام (لم تتم تنقيته بعد)", emptyRecs:"لا توجد تسجيلات بعد",
-    analyzing:"جاري التحليل…", transcribing:"جاري التفريغ…", noAnswerPill:"☎ اتصل — لم يُرد",
-    check:"تحقّق", details:"التفاصيل", coaching:"نصائح", summary:"ملخص", transcript:"النص",
-    missed:"المكالمات الفائتة",
-    noteMissed:"مكالمات واتساب الفائتة تظهر باسم جهة الاتصال (واتساب يخفي الأرقام). تتبّع معاودة الاتصال لمكالمات الشريحة.",
-    colChannel:"القناة", colFrom:"من", colCalledBackQ:"عاود الاتصال؟",
-    hiddenNumber:"رقم مخفي", unknown:"غير معروف",
-    callbackAfterPre:"✓ بعد", callbackNot:"✗ ليس بعد", emptyMissed:"لا توجد مكالمات فائتة بعد",
-    minUnit:"دقيقة", sentHappy:"🙂 سعيد", sentNeutral:"😐 محايد", sentUpset:"😠 منزعج",
-    leadInterested:"مهتم", leadFollowup:"متابعة", leadClosed:"مغلق", leadNotInterested:"غير مهتم",
+    analytics:"التحليلات", placeholderNote:"بيانات تجريبية — الأرقام الحقيقية تظهر بعد ربط نظام تحليل المكالمات.",
+    // sub-tab names
+    tabOverview:"نظرة عامة", tabActions:"نقاط العمل", tabEmployees:"الموظفون", tabRisk:"المخاطر والتسرّب",
+    tabVoice:"صوت العميل", tabTrends:"الاتجاهات", tabClients:"المراكز",
+    // KPIs
+    kTotalCalls:"إجمالي المكالمات", kAnswerRate:"نسبة الرد", kConversion:"نسبة التحويل", kQuality:"متوسط جودة المكالمة",
+    kHappy:"عملاء راضون", kRecovery:"استرجاع المكالمات الفائتة", kHandle:"متوسط مدة المكالمة", kAgents:"وكلاء نشطون",
+    kThisWeek:"هذا الأسبوع", vsLast:"مقارنةً بالأسبوع الماضي",
+    // action points
+    actionsTitle:"ما الذي يجب فعله الآن", actNow:"عاجل", actWeek:"هذا الأسبوع", actInfo:"فرصة",
+    topActions:"أهم الأولويات", seeAll:"عرض كل نقاط العمل ←", emptyActions:"لا شيء يحتاج انتباهاً — كل شيء على ما يرام.",
+    // employees
+    empTitle:"تقييمات الموظفين", empNote:"مُقيَّمة وفق معايير تجريبية — ستحدّد معاييرك الحقيقية لكل مركز لاحقاً.",
+    eCalls:"المكالمات", eConv:"التحويل", eSent:"رضا العملاء", eRank:"الترتيب", coaching:"نصائح",
+    critGreeting:"الترحيب", critDiscovery:"استكشاف الحاجة", critKnowledge:"المعرفة بالمنتج",
+    critObjection:"معالجة الاعتراضات", critClosing:"الإغلاق", critPoliteness:"اللباقة", critScript:"الالتزام بالنص",
+    // risk & churn
+    riskTitle:"عملاء معرّضون للخطر", riskNote:"عملاء أبدَوا نية المغادرة أو الشكوى أو طلبوا مسؤولاً.",
+    churnCustomers:"عملاء معرّضون للتسرّب", complaintsBy:"الشكاوى حسب الفئة", escalations:"طلبات التصعيد",
+    repeatCallers:"مكالمات متكررة (لم تُحل)", riskSignal:"المؤشر", riskCustomer:"العميل",
+    // customer voice
+    voiceTitle:"ماذا يقول عملاؤك", topTopics:"أهم المواضيع", trending:"في تصاعد",
+    competitors:"المنافسون المذكورون", productReq:"منتجات / ميزات مطلوبة", marketing:"كيف سمعوا عنك",
+    // trends
+    trendsTitle:"الاتجاهات (آخر ١٤ يوماً)", trCalls:"حجم المكالمات", trQuality:"متوسط الجودة",
+    trConv:"نسبة التحويل", peakHours:"أوقات الذروة", peakNote:"الأغمق = مكالمات أكثر. استخدمها لتوزيع فريقك.",
+    // clients
+    clientsTitle:"مقارنة المراكز", cCalls:"المكالمات", cScore:"الجودة", cConv:"التحويل", cSent:"راضون", cMissed:"فائتة",
+    sentHappy:"🙂 سعيد", sentNeutral:"😐 محايد", sentUpset:"😠 منزعج",
+    dow:["الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت","الأحد"],
   },
 };
 let lang = localStorage.getItem("shareek_lang") || "ar";
@@ -283,8 +349,9 @@ let adminMode = false;  // master-only Accounts view
 let adminData = null;   // { users, clients }
 let adminMsg = "";      // last action feedback
 let analyticsMode = false;  // master-only Analytics view
-let analyticsData = null;   // { recordings, missed_calls }
+let analyticsData = null;   // CEO analytics payload (mock for now)
 let analyticsMsg = "";      // last error/feedback message
+let analyticsTab = "overview"; // active analytics sub-tab
 
 // ---- status helpers ----------------------------------------------------------
 function statusMeta(s) {
@@ -781,144 +848,278 @@ async function deleteClient(code) {
   adminMsg = ok ? t("doneDeleted") : (j.error || t("serverError")); await refreshAdmin();
 }
 
-// ---- Analytics panel (master only) — call recordings + AI insights + missed calls ----
-const scoreColor = s => s >= 80 ? "#1d7a4d" : s >= 60 ? "#b8860b" : s >= 40 ? "#d35400" : "#c0392b";
-const sentClass = { happy:"sent-happy", neutral:"sent-neutral", frustrated:"sent-frustrated" };
-const sentText = s => ({ happy:t("sentHappy"), neutral:t("sentNeutral"), frustrated:t("sentUpset") }[s] || esc(s));
-const leadText = l => ({ interested:t("leadInterested"), needs_followup:t("leadFollowup"), closed:t("leadClosed"),
-  not_interested:t("leadNotInterested"), na:"—" }[l] || esc(l));
-const mins = sec => (sec ? Math.round(sec / 6) / 10 : 0) + " " + t("minUnit");
+// ---- CEO Analytics dashboard (master only) --------------------------------------------
+// PLACEHOLDER DATA. Real numbers arrive once the AI pipeline emits the extra fields
+// (criteria_scores, churn_risk, complaint, competitor_mentions, product_requests, marketing_source…).
+// When that's ready, replace MOCK_ANALYTICS below with a fetch to ANALYTICS_API (see openAnalytics).
+const MOCK_ANALYTICS = {
+  kpis: {
+    total_calls:1284, total_calls_d:8, answer_rate:87, answer_rate_d:2, conversion:31, conversion_d:-3,
+    quality:78, quality_d:4, happy:64, happy_d:5, recovery:72, recovery_d:11, handle:"4.2m", agents:14,
+  },
+  sentiment: { happy:64, neutral:24, upset:12 },
+  action_points: [
+    { level:"red",  ico:"🚨", title:"3 customers at risk of leaving", ctx:"Karrada Center · flagged this week", action:"Have a supervisor call them back personally today." },
+    { level:"red",  ico:"😠", title:"Complaint spike: delivery delays", ctx:"7 complaints in 2 days · +250% vs usual", action:"Check the delivery process — likely a systemic issue." },
+    { level:"red",  ico:"📉", title:"Agent Sara's quality dropped to 48", ctx:"Mansour Center · down from 71 last week", action:"Book a coaching session and review her recent calls." },
+    { level:"amber",ico:"📞", title:"9 promised callbacks not yet made", ctx:"Across 4 agents", action:"Remind agents to honor their callback promises." },
+    { level:"amber",ico:"🎯", title:"5 agents weak on closing", ctx:"Average closing score 54 / 100", action:"Run a closing-techniques training this week." },
+    { level:"amber",ico:"🔁", title:"4 repeat callers still unresolved", ctx:"Same customers called 3+ times", action:"Route them to a senior agent to resolve for good." },
+    { level:"info", ico:"🏷️", title:"Competitor 'Asiacell' mentioned 12 times", ctx:"Usually during price objections", action:"Brief agents on your price advantages." },
+    { level:"info", ico:"💡", title:"18 customers asked for home delivery", ctx:"A service you don't offer yet", action:"Consider adding it — there's clear demand." },
+    { level:"info", ico:"📣", title:"Instagram is your top call source", ctx:"41% of 'how did you hear about us'", action:"Double down on Instagram ad spend." },
+  ],
+  employees: [
+    { name:"Ahmed Ali", client:"Karrada Center", overall:88, calls:112, conversion:38, sentiment:"happy", trend:6,
+      criteria:[["critGreeting",92],["critDiscovery",85],["critKnowledge",90],["critObjection",82],["critClosing",88],["critPoliteness",95],["critScript",84]],
+      coaching:"Excellent rapport. Could ask a few more discovery questions before pitching." },
+    { name:"Zainab Kareem", client:"Karrada Center", overall:81, calls:98, conversion:34, sentiment:"happy", trend:2,
+      criteria:[["critGreeting",88],["critDiscovery",80],["critKnowledge",84],["critObjection",76],["critClosing",78],["critPoliteness",90],["critScript",80]],
+      coaching:"Strong product knowledge. Work on handling price objections." },
+    { name:"Omar Hassan", client:"Mansour Center", overall:69, calls:87, conversion:25, sentiment:"neutral", trend:-1,
+      criteria:[["critGreeting",78],["critDiscovery",65],["critKnowledge",72],["critObjection",60],["critClosing",58],["critPoliteness",82],["critScript",70]],
+      coaching:"Loses momentum near the close. Practice asking for the sale directly." },
+    { name:"Sara Jasim", client:"Mansour Center", overall:48, calls:64, conversion:12, sentiment:"upset", trend:-23,
+      criteria:[["critGreeting",60],["critDiscovery",42],["critKnowledge",55],["critObjection",38],["critClosing",34],["critPoliteness",58],["critScript",50]],
+      coaching:"Sharp drop this week. Review recent calls and coach on tone and closing." },
+  ],
+  risk: {
+    churn: [
+      { customer:"Customer 0770•••", client:"Karrada", signal:"Said 'I'll switch to another company'" },
+      { customer:"Abu Mohammed", client:"Mansour", signal:"Complained twice with no resolution" },
+      { customer:"Customer 0751•••", client:"Karrada", signal:"Asked how to cancel the subscription" },
+    ],
+    complaints: [["Delivery delays",7],["Wrong item",4],["Rude response",2],["Billing",2]],
+    escalations: 6, repeat: 4,
+  },
+  voice: {
+    topics: [["Pricing",142],["Delivery",118],["Product availability",96],["Warranty",54],["Payment options",41]],
+    trending: ["Home delivery","Installment plans"],
+    competitors: [["Asiacell",12],["Zain",8],["Local shop X",5]],
+    requests: ["Home delivery","Installment payments","Weekend support hours","English-speaking agent"],
+    marketing: [["Instagram",41],["Word of mouth",28],["Facebook",18],["TikTok",9],["Other",4]],
+  },
+  trends: {
+    calls:   [78,84,92,88,101,96,73,80,90,110,105,98,112,120],
+    quality: [72,74,73,75,76,74,77,78,76,79,80,78,81,82],
+    conv:    [28,30,29,33,31,27,30,32,34,31,35,33,36,38],
+    peak: [[20,45,70,80,55,30],[25,50,75,85,60,35],[30,55,80,90,65,40],[28,52,78,88,62,38],[35,60,85,95,70,45],[40,65,70,60,50,30],[15,30,40,35,25,15]],
+    peakCols:["8–10","10–12","12–14","14–16","16–18","18–20"],
+  },
+  clients: [
+    { name:"Karrada Center", calls:642, quality:84, conversion:36, happy:71, missed:9 },
+    { name:"Mansour Center", calls:498, quality:66, conversion:22, happy:52, missed:16 },
+    { name:"Basra Center",   calls:144, quality:74, conversion:29, happy:61, missed:12 },
+  ],
+};
 
-// One recording's insights cell: score + sentiment + lead + topics, with an
-// expander for the summary, coaching tips, and full transcript.
-function insightCell(r) {
-  if (r.call_outcome === "no_answer") {
-    const pill = `<span class="pill noans">${t("noAnswerPill")}</span>`;
-    const check = r.transcript
-      ? `<details class="insight"><summary>${t("check")}</summary>
-        <div class="body"><div class="transcript">${esc(r.transcript)}</div></div></details>` : "";
-    return pill + check;
-  }
-  const a = r.analysis;
-  if (!a) return r.transcript ? `<small>${t("analyzing")}</small>`
-    : (r.status === "cleaned" || r.status === "transcribed") ? `<small>${t("transcribing")}</small>` : "—";
-  const score = typeof a.agent_score === "number"
-    ? `<span class="score" style="background:${scoreColor(a.agent_score)}">${a.agent_score}</span>` : "";
-  const sent = a.sentiment ? `<span class="pill ${sentClass[a.sentiment] || ""}">${sentText(a.sentiment)}</span>` : "";
-  const lead = a.lead_outcome ? `<span class="pill lead">${leadText(a.lead_outcome)}</span>` : "";
-  const topics = Array.isArray(a.topics) && a.topics.length
-    ? `<div class="topics">${a.topics.map(esc).join(" · ")}</div>` : "";
-  const coaching = Array.isArray(a.agent_coaching) && a.agent_coaching.length
-    ? `<b>${t("coaching")}</b><ul>${a.agent_coaching.map(t2 => `<li>${esc(t2)}</li>`).join("")}</ul>` : "";
-  const summary = a.summary ? `<b>${t("summary")}</b><div>${esc(a.summary)}</div>` : "";
-  const transcript = r.transcript ? `<b>${t("transcript")}</b><div class="transcript">${esc(r.transcript)}</div>` : "";
-  return `<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">${score}${sent}${lead}</div>${topics}
-    <details class="insight"><summary>${t("details")}</summary>
-      <div class="body">${summary}${coaching}${transcript}</div></details>`;
+const scoreColor = s => s >= 80 ? "#1d7a4d" : s >= 60 ? "#b8860b" : s >= 40 ? "#d35400" : "#c0392b";
+const scoreBadge = v => `<span class="score" style="background:${scoreColor(v)}">${v}</span>`;
+const sentPill = s => {
+  const cls = { happy:"sent-happy", neutral:"sent-neutral", upset:"sent-upset" }[s] || "sent-neutral";
+  const txt = { happy:t("sentHappy"), neutral:t("sentNeutral"), upset:t("sentUpset") }[s] || esc(s);
+  return `<span class="pill ${cls}">${txt}</span>`;
+};
+
+// ---- tiny hand-rolled charts (inline SVG / CSS — no external library) ----
+function lineChart(vals, color) {
+  const W = 320, H = 120, p = 10;
+  const min = Math.min(...vals), max = Math.max(...vals), rng = (max - min) || 1;
+  const x = i => p + i * (W - 2 * p) / (vals.length - 1);
+  const y = v => H - p - (v - min) / rng * (H - 2 * p);
+  const pts = vals.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="height:120px">
+    <polygon points="${p},${H - p} ${pts} ${W - p},${H - p}" fill="${color}" opacity="0.12"></polygon>
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></polyline>
+  </svg>`;
+}
+function donut(segs) { // segs = [[label, value, color]]
+  const total = segs.reduce((s, x) => s + x[1], 0) || 1, R = 52, C = 2 * Math.PI * R, cx = 60, cy = 60;
+  let off = 0;
+  const rings = segs.map(([, v, c]) => {
+    const len = v / total * C, el = `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${c}" stroke-width="16" stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-off}" transform="rotate(-90 ${cx} ${cy})"></circle>`;
+    off += len; return el;
+  }).join("");
+  return `<svg viewBox="0 0 120 120" style="max-width:150px;margin:0 auto">${rings}</svg>`;
+}
+function hbars(items, color, suffix) {
+  const max = Math.max(...items.map(i => i[1]), 1);
+  return items.map(([l, v]) => `<div class="hbar-row">
+    <div class="hbar-lbl">${esc(l)}</div>
+    <div class="hbar-track"><div class="hbar-fill" style="width:${(v / max * 100).toFixed(0)}%;background:${color || "var(--gGreen)"}"></div></div>
+    <div class="hbar-val">${v}${suffix || ""}</div></div>`).join("");
+}
+function heatmap(matrix, cols, rowLabels) {
+  const cell = v => `<div class="h-cell" title="${v}" style="background:rgba(47,163,107,${(0.1 + v / 100 * 0.9).toFixed(2)})"></div>`;
+  const head = `<div></div>` + cols.map(c => `<div style="font-size:10px;text-align:center;color:#667">${esc(c)}</div>`).join("");
+  const rows = matrix.map((row, i) => `<div style="font-size:11px;color:#556;align-self:center">${esc(rowLabels[i])}</div>` + row.map(cell).join("")).join("");
+  return `<div class="heat" style="grid-template-columns:64px repeat(${cols.length},1fr)">${head}${rows}</div>`;
+}
+
+// ---- KPI + action helpers ----
+function kpiTile(label, val, deltaText, dir) {
+  const cls = dir > 0 ? "up" : dir < 0 ? "down" : "";
+  const arrow = dir > 0 ? "▲ " : dir < 0 ? "▼ " : "";
+  const sub = deltaText != null ? `<div class="k-sub ${cls}">${arrow}${esc(deltaText)}</div>` : "";
+  return `<div class="kpi"><div class="k-label">${esc(label)}</div><div class="k-val">${esc(val)}</div>${sub}</div>`;
+}
+const lvlRank = { red:0, amber:1, info:2 };
+const sortActions = list => [...list].sort((a, b) => lvlRank[a.level] - lvlRank[b.level]);
+function actionCard(a) {
+  const lvlText = a.level === "red" ? t("actNow") : a.level === "amber" ? t("actWeek") : t("actInfo");
+  return `<div class="act ${a.level}">
+    <div class="a-ico">${a.ico}</div>
+    <div class="a-body">
+      <div class="a-title">${esc(a.title)}</div>
+      <div class="a-ctx">${esc(a.ctx)}</div>
+      <div class="a-do">➜ <b>${esc(a.action)}</b></div>
+    </div>
+    <span class="act-badge ${a.level}">${lvlText}</span>
+  </div>`;
+}
+
+// ---- per-tab renderers ----
+function renderOverview() {
+  const k = analyticsData.kpis, s = analyticsData.sentiment;
+  const vs = t("vsLast");
+  const tiles = [
+    kpiTile(t("kTotalCalls"), k.total_calls, k.total_calls_d + "% " + vs, k.total_calls_d),
+    kpiTile(t("kAnswerRate"), k.answer_rate + "%", k.answer_rate_d + "% " + vs, k.answer_rate_d),
+    kpiTile(t("kConversion"), k.conversion + "%", Math.abs(k.conversion_d) + "% " + vs, k.conversion_d),
+    kpiTile(t("kQuality"), k.quality, k.quality_d + " " + vs, k.quality_d),
+    kpiTile(t("kHappy"), k.happy + "%", k.happy_d + "% " + vs, k.happy_d),
+    kpiTile(t("kRecovery"), k.recovery + "%", k.recovery_d + "% " + vs, k.recovery_d),
+    kpiTile(t("kHandle"), k.handle, null, 0),
+    kpiTile(t("kAgents"), k.agents, null, 0),
+  ].join("");
+  const top = sortActions(analyticsData.action_points).slice(0, 3).map(actionCard).join("");
+  const segs = [[t("sentHappy"), s.happy, "#2FA36B"], [t("sentNeutral"), s.neutral, "#C9C6BC"], [t("sentUpset"), s.upset, "#D64545"]];
+  const legend = segs.map(([l, v, c]) => `<span><i style="background:${c}"></i>${esc(l)} ${v}%</span>`).join("");
+  return `<div class="kpis">${tiles}</div>
+    <div class="section">
+      <h3>${t("topActions")} <a class="sub" style="cursor:pointer;color:#274b7a;font-weight:600" onclick="setAnalyticsTab('actions')">${t("seeAll")}</a></h3>
+      <div class="acts-list">${top}</div>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-box"><h3>${t("trCalls")} (14d)</h3>${lineChart(analyticsData.trends.calls, "#2FA36B")}</div>
+      <div class="chart-box"><h3>${t("kHappy")}</h3>${donut(segs)}<div class="legend">${legend}</div></div>
+    </div>`;
+}
+function renderActions() {
+  const list = sortActions(analyticsData.action_points);
+  const body = list.length ? `<div class="acts-list">${list.map(actionCard).join("")}</div>`
+    : `<div class="empty">${t("emptyActions")}</div>`;
+  return `<div class="section"><h3>${t("actionsTitle")}</h3>${body}</div>`;
+}
+function renderEmployees() {
+  const emps = [...analyticsData.employees].sort((a, b) => b.overall - a.overall);
+  const cards = emps.map((e, i) => {
+    const crit = e.criteria.map(([key, v]) => `<div class="c-row">
+      <div class="c-lbl">${t(key)}</div>
+      <div class="c-bar"><div class="c-fill" style="width:${v}%;background:${scoreColor(v)}"></div></div>
+      <div class="c-num">${v}</div></div>`).join("");
+    const trend = e.trend > 0 ? `<span class="trend-up">▲ ${e.trend}</span>` : e.trend < 0 ? `<span class="trend-dn">▼ ${Math.abs(e.trend)}</span>` : "—";
+    return `<div class="emp">
+      <div class="e-top">
+        <div class="e-name">${esc(e.name)}<span class="sub">${esc(e.client)}</span></div>
+        <div style="text-align:end"><div class="e-rank">#${i + 1}</div>${scoreBadge(e.overall)}</div>
+      </div>
+      <div class="crit">${crit}</div>
+      <div class="e-foot">
+        <span>${t("eCalls")}: <b>${e.calls}</b></span>
+        <span>${t("eConv")}: <b>${e.conversion}%</b></span>
+        <span>${sentPill(e.sentiment)}</span>
+        <span>${vsShort()}: ${trend}</span>
+      </div>
+      <div class="coach"><b>${t("coaching")}:</b> ${esc(e.coaching)}</div>
+    </div>`;
+  }).join("");
+  return `<p class="a-note">${t("empNote")}</p>
+    <div class="section"><h3>${t("empTitle")}</h3><div class="emp-grid">${cards}</div></div>`;
+}
+const vsShort = () => t("vsLast");
+function renderRisk() {
+  const r = analyticsData.risk;
+  const churn = r.churn.map(c => `<div class="act red">
+    <div class="a-ico">⚠️</div>
+    <div class="a-body"><div class="a-title">${esc(c.customer)} <span class="sub">· ${esc(c.client)}</span></div>
+      <div class="a-ctx">${t("riskSignal")}: ${esc(c.signal)}</div></div></div>`).join("");
+  return `<p class="a-note">${t("riskNote")}</p>
+    <div class="section"><h3>${t("churnCustomers")}</h3><div class="acts-list">${churn}</div></div>
+    <div class="chart-grid">
+      <div class="chart-box"><h3>${t("complaintsBy")}</h3>${hbars(r.complaints, "var(--gRed)")}</div>
+      <div class="chart-box"><h3></h3>
+        <div class="kpis" style="margin:0">
+          ${kpiTile(t("escalations"), r.escalations, t("kThisWeek"), 0)}
+          ${kpiTile(t("repeatCallers"), r.repeat, t("kThisWeek"), 0)}
+        </div></div>
+    </div>`;
+}
+function renderVoice() {
+  const v = analyticsData.voice;
+  const trending = v.trending.map(x => `<span class="chip">📈 <b>${esc(x)}</b></span>`).join("");
+  const requests = v.requests.map(x => `<span class="chip">${esc(x)}</span>`).join("");
+  return `<p class="a-note">${t("voiceTitle")}</p>
+    <div class="chart-grid">
+      <div class="chart-box"><h3>${t("topTopics")}</h3>${hbars(v.topics, "var(--navy)")}
+        <div class="legend" style="margin-top:12px">${t("trending")}: <div class="chips">${trending}</div></div></div>
+      <div class="chart-box"><h3>${t("competitors")}</h3>${hbars(v.competitors, "var(--gAmber)")}</div>
+      <div class="chart-box"><h3>${t("marketing")}</h3>${hbars(v.marketing, "#2f6fd6", "%")}</div>
+      <div class="chart-box"><h3>${t("productReq")}</h3><div class="chips">${requests}</div></div>
+    </div>`;
+}
+function renderTrends() {
+  const tr = analyticsData.trends;
+  const box = (title, vals, color, suffix) => `<div class="chart-box">
+    <h3>${title}</h3><div style="font-size:22px;font-weight:700;margin-bottom:4px">${vals[vals.length - 1]}${suffix || ""}</div>
+    ${lineChart(vals, color)}</div>`;
+  return `<div class="section"><h3>${t("trendsTitle")}</h3>
+    <div class="chart-grid">
+      ${box(t("trCalls"), tr.calls, "#2FA36B", "")}
+      ${box(t("trQuality"), tr.quality, "#2f6fd6", "")}
+      ${box(t("trConv"), tr.conv, "#b8860b", "%")}
+    </div></div>
+    <div class="section"><h3>${t("peakHours")}</h3><p class="a-note">${t("peakNote")}</p>
+      <div class="chart-box">${heatmap(tr.peak, tr.peakCols, t("dow"))}</div></div>`;
+}
+function renderClients() {
+  const rows = analyticsData.clients.map(c => `<tr>
+    <td><b>${esc(c.name)}</b></td>
+    <td>${c.calls}</td>
+    <td>${scoreBadge(c.quality)}</td>
+    <td>${c.conversion}%</td>
+    <td>${c.happy}%</td>
+    <td>${c.missed}%</td></tr>`).join("");
+  return `<div class="section"><h3>${t("clientsTitle")}</h3>
+    <div class="scroll"><table>
+      <tr><th>${t("tabClients")}</th><th>${t("cCalls")}</th><th>${t("cScore")}</th><th>${t("cConv")}</th><th>${t("cSent")}</th><th>${t("cMissed")}</th></tr>
+      ${rows}</table></div></div>`;
 }
 
 function analyticsPanel() {
   if (!analyticsData) return `<div id="loading">${t("loading")}</div>`;
-  const recs = analyticsData.recordings || [];
-  const misses = analyticsData.missed_calls || [];
-
-  // per-agent scoreboard
-  const agentsMap = new Map();
-  const agg = n => { if (!agentsMap.has(n)) agentsMap.set(n, { calls:0, seconds:0, checked:0, passed:0, missed:0, back:0, cb:[], scores:[], leadCalls:0, won:0 }); return agentsMap.get(n); };
-  for (const r of recs) {
-    const a = agg(`${r.agent_name} (${r.call_center_code})`);
-    a.calls++; a.seconds += r.duration_seconds || 0;
-    if (r.self_check_passed !== null) { a.checked++; if (r.self_check_passed) a.passed++; }
-    if (r.analysis) {
-      if (typeof r.analysis.agent_score === "number") a.scores.push(r.analysis.agent_score);
-      if (r.analysis.lead_outcome && r.analysis.lead_outcome !== "na") {
-        a.leadCalls++; if (r.analysis.lead_outcome === "closed") a.won++;
-      }
-    }
+  const tabs = [["overview","tabOverview"],["actions","tabActions"],["employees","tabEmployees"],
+    ["risk","tabRisk"],["voice","tabVoice"],["trends","tabTrends"],["clients","tabClients"]];
+  const nav = `<div class="tabs">${tabs.map(([id, k]) =>
+    `<button class="${analyticsTab === id ? "active" : ""}" onclick="setAnalyticsTab('${id}')">${t(k)}</button>`).join("")}</div>`;
+  let body;
+  switch (analyticsTab) {
+    case "actions":   body = renderActions();   break;
+    case "employees": body = renderEmployees(); break;
+    case "risk":      body = renderRisk();      break;
+    case "voice":     body = renderVoice();     break;
+    case "trends":    body = renderTrends();    break;
+    case "clients":   body = renderClients();   break;
+    default:          body = renderOverview();
   }
-  for (const m of misses) {
-    const a = agg(`${m.agent_name} (${m.call_center_code})`);
-    a.missed++;
-    if (m.called_back) { a.back++; if (m.callback_after_minutes != null) a.cb.push(+m.callback_after_minutes); }
-  }
-  const cards = [...agentsMap.entries()].map(([name, a]) => {
-    const rate = a.missed ? Math.round(a.back / a.missed * 100) : null;
-    const avg = a.cb.length ? (a.cb.reduce((x,y)=>x+y,0)/a.cb.length).toFixed(0) : null;
-    const avgScore = a.scores.length ? Math.round(a.scores.reduce((x,y)=>x+y,0)/a.scores.length) : null;
-    const conv = a.leadCalls ? Math.round(a.won / a.leadCalls * 100) : null;
-    return `<div class="agent"><b>${esc(name)}</b>
-      <div class="row"><span>${t("cRecorded")}</span><span>${a.calls}</span></div>
-      <div class="row"><span>${t("cTalk")}</span><span>${mins(a.seconds)}</span></div>
-      <div class="row"><span>${t("cScore")}</span><span>${avgScore === null ? "—" : `<span class="score" style="background:${scoreColor(avgScore)}">${avgScore}</span>`}</span></div>
-      <div class="row"><span>${t("cConv")}</span><span>${conv === null ? "—" : conv + "% (" + a.won + "/" + a.leadCalls + ")"}</span></div>
-      <div class="row"><span>${t("cCapture")}</span><span>${a.checked ? a.passed + "/" + a.checked + " " + t("okSuffix") : "—"}</span></div>
-      <div class="row"><span>${t("cMissed")}</span><span>${a.missed}</span></div>
-      <div class="row"><span>${t("cCalledBack")}</span><span>${rate === null ? "—" : rate + "%" + (avg ? " (~" + avg + " " + t("minUnit") + ")" : "")}</span></div>
-    </div>`;
-  }).join("") || `<div class="empty">${t("emptyAgents")}</div>`;
-
-  const recRows = recs.map(r => `<tr class="${r.call_outcome === "no_answer" ? "no-answer" : ""}">
-    <td>${esc(r.agent_name)}<br><span class="sub">${esc(r.call_center_code)}</span></td>
-    <td>${fmtTime(r.started_at)}</td>
-    <td>${mins(r.duration_seconds)}</td>
-    <td><span class="pill ${r.call_type === "SIM" ? "sim" : "wa"}">${esc(r.call_type || "—")}</span></td>
-    <td>${r.self_check_passed == null ? "—" : r.self_check_passed ? `<span class="ok">${t("captureOk")}</span>` : `<span class="bad">${t("captureSilent")}</span>`}</td>
-    <td>${r.raw_dbfs != null ? esc(r.raw_dbfs) + " → <b>" + esc(r.clean_dbfs ?? "…") + "</b> dBFS" : (r.status === "uploaded" ? t("waitingCleanup") : "—")}</td>
-    <td>${esc(r.status)}</td>
-    <td>${insightCell(r)}</td>
-    <td>${r.audio_url ? `<audio controls preload="none" src="${esc(r.audio_url)}"></audio>${r.audio_is_clean ? "" : `<br><span class="sub">${t("rawNotClean")}</span>`}` : "—"}</td>
-  </tr>`).join("");
-
-  const missRows = misses.map(m => `<tr>
-    <td>${esc(m.agent_name)}<br><span class="sub">${esc(m.call_center_code)}</span></td>
-    <td><span class="pill ${m.channel === "SIM" ? "sim" : "wa"}">${esc(m.channel)}</span></td>
-    <td>${esc(m.channel === "SIM" ? (m.phone_number || t("hiddenNumber")) : (m.contact_name || t("unknown")))}</td>
-    <td>${fmtTime(m.missed_at)}</td>
-    <td>${m.channel !== "SIM" ? "—" : m.called_back
-      ? `<span class="ok">${t("callbackAfterPre")} ${esc(m.callback_after_minutes)} ${t("minUnit")}</span>`
-      : `<span class="bad">${t("callbackNot")}</span>`}</td>
-  </tr>`).join("");
-
-  return `
-    ${analyticsMsg ? `<p class="note" style="color:var(--gGreen);font-weight:600">${esc(analyticsMsg)}</p>` : ""}
-    <h2>${t("agents")}</h2>
-    <div class="cards">${cards}</div>
-
-    <h2>${t("recordedCalls")}</h2>
-    <p class="note">${t("noteRecs")}</p>
-    <label class="toggle"><input type="checkbox" ${document.body.classList.contains("hide-no-answer") ? "checked" : ""}
-      onchange="document.body.classList.toggle('hide-no-answer', this.checked)">
-      ${t("hideNoAnswer")}</label>
-    <div class="scroll">${recs.length ? `<table>
-      <tr><th>${t("colAgent")}</th><th>${t("colWhen")}</th><th>${t("colLength")}</th><th>${t("colType")}</th><th>${t("colCapture")}</th><th>${t("colQuality")}</th><th>${t("colStatus")}</th><th>${t("colInsights")}</th><th>${t("colListen")}</th></tr>
-      ${recRows}</table>` : `<div class="empty">${t("emptyRecs")}</div>`}</div>
-
-    <h2>${t("missed")}</h2>
-    <p class="note">${t("noteMissed")}</p>
-    <div class="scroll">${misses.length ? `<table>
-      <tr><th>${t("colAgent")}</th><th>${t("colChannel")}</th><th>${t("colFrom")}</th><th>${t("colWhen")}</th><th>${t("colCalledBackQ")}</th></tr>
-      ${missRows}</table>` : `<div class="empty">${t("emptyMissed")}</div>`}</div>`;
+  return `<p class="a-note">${t("placeholderNote")}</p>${nav}${body}`;
 }
 
-async function analyticsCall(retried) {
-  let res;
-  try {
-    res = await fetch(ANALYTICS_API, {
-      method: "POST",
-      headers: { apikey: ANON, Authorization: "Bearer " + session.access_token, "content-type": "application/json" },
-      body: JSON.stringify({}),
-    });
-  } catch (e) { return { ok: false, j: { error: t("noConn") } }; }
-  if (res.status === 401 && !retried && await refreshSession()) return analyticsCall(true);
-  const j = await res.json().catch(() => ({}));
-  return { ok: res.ok, status: res.status, j };
-}
-
-async function openAnalytics() { analyticsMode = true; analyticsData = null; analyticsMsg = ""; render();
-  const { ok, j } = await analyticsCall();
-  if (ok) analyticsData = j; else analyticsMsg = j.error || t("serverError");
-  render();
-}
+function setAnalyticsTab(id) { analyticsTab = id; render(); }
+// SEAM: for now the CEO dashboard runs on placeholder data. Once the pipeline emits the
+// analytics fields, swap the line below for a fetch to ANALYTICS_API (same auth pattern as
+// adminCall) and drop the returned payload into analyticsData.
+function openAnalytics() { analyticsMode = true; analyticsTab = "overview"; analyticsData = MOCK_ANALYTICS; analyticsMsg = ""; render(); }
 function closeAnalytics() { analyticsMode = false; analyticsMsg = ""; render(); }
 
 applyLang();
