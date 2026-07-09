@@ -614,6 +614,9 @@ async function load(fromLogin, retried) {
   if (res.status === 403) { session = null; stopTimer(); return loginScreen(t("noAccess")); }
   if (!res.ok) { if (fromLogin) loginScreen(t("serverError") + " (" + res.status + ")"); return; }
   data = await res.json();
+  // The master account (the owner) defaults to English; everyone else stays Arabic.
+  // A manual language toggle is stored in localStorage and always wins over this default.
+  if (data.role === "master" && !localStorage.getItem("shareek_lang")) lang = "en";
   // default selected tab = worst client
   if (!selectedCode || !data.clients.some(c => c.call_center_code === selectedCode)) {
     const sorted = sortedClients();
