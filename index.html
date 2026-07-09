@@ -72,6 +72,33 @@ h2 .att { color:var(--gRed); }
 td.acts { white-space:nowrap; }
 td.acts button { background:var(--navy); color:var(--cream); border:0; border-radius:7px; padding:5px 10px; font-size:12px; font-weight:600; cursor:pointer; font-family:inherit; margin-inline-end:5px; }
 td.acts button.danger { background:#c0392b; color:#fff; }
+
+/* ---- analytics (ported from dashboard.html) ---- */
+.cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px; margin:16px 0; }
+.agent { background:#fff; border-radius:12px; padding:14px 16px; box-shadow:0 1px 4px rgba(13,27,42,.12); }
+.agent b { font-size:16px; }
+.agent .row { display:flex; justify-content:space-between; font-size:13px; margin-top:6px; }
+.agent .row span:last-child { font-weight:600; }
+.ok { color:var(--green); font-weight:700; } .bad { color:#c0392b; font-weight:700; }
+.pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:600; }
+.pill.sim { background:var(--cream2); } .pill.wa { background:#d9f2e4; color:#1d7a4d; }
+audio { height:30px; max-width:230px; }
+.score { display:inline-block; min-width:34px; text-align:center; padding:2px 7px; border-radius:8px; font-weight:700; font-size:12px; color:#fff; }
+.pill.sent-happy { background:#d9f2e4; color:#1d7a4d; } .pill.sent-neutral { background:var(--cream2); }
+.pill.sent-frustrated { background:#fbe0dd; color:#c0392b; }
+.pill.lead { background:#e6ecf5; color:#274b7a; }
+.pill.noans { background:#fbe0dd; color:#c0392b; }
+tr.no-answer td { background:#fcf4f3; }
+body.hide-no-answer tr.no-answer { display:none; }
+.toggle { font-size:12px; color:#666; display:inline-flex; align-items:center; gap:6px; margin:0 0 10px; cursor:pointer; }
+.topics { color:#555; font-size:11px; }
+details.insight { margin-top:5px; }
+details.insight summary { cursor:pointer; font-size:12px; color:#274b7a; font-weight:600; }
+details.insight .body { margin-top:6px; font-size:12px; }
+details.insight .body b { display:block; margin-top:6px; }
+details.insight ul { margin:4px 0; padding-inline-start:18px; }
+.transcript { direction:rtl; text-align:right; white-space:pre-wrap; background:#f6f5f0; border-radius:8px;
+  padding:8px 10px; max-height:220px; overflow:auto; font-size:12px; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -84,6 +111,7 @@ td.acts button.danger { background:#c0392b; color:#fff; }
 const SB = "https://pxeiozmsfvmypcsqbcqv.supabase.co";
 const API = SB + "/functions/v1/health";
 const ADMIN_API = SB + "/functions/v1/admin";
+const ANALYTICS_API = SB + "/functions/v1/analytics";
 // Public anon key — identifies the project to Supabase Auth + the function gateway. The real gate is
 // the user's email + password (Supabase Auth). Safe to ship in client HTML.
 const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4ZWlvem1zZnZteXBjc3FiY3F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwNDI1MTcsImV4cCI6MjA5NzYxODUxN30.s23PCgc_HuGRUSdN3hMNXBsdsavofLBIZj3Ppq5lP94";
@@ -126,6 +154,26 @@ const T = {
     confirmForceDeleteClient:"This client still has phones in its roster. Delete it anyway and remove those phones too? (Already-uploaded recordings are not affected — if the phones are still active they'll just reappear on their next check-in.)",
     doneAdded:"Client added.", doneDeleted:"Client deleted.",
     hours:"h", minutes:"m", days:"d",
+    analytics:"Analytics", colAgent:"Agent",
+    agents:"Agents", cRecorded:"Recorded calls", cTalk:"Talk time", cScore:"Avg call score",
+    cConv:"Lead conversion", cCapture:"Capture check", cMissed:"Missed calls", cCalledBack:"Called back",
+    okSuffix:"ok", emptyAgents:"No data yet — install the app and make a call",
+    recordedCalls:"Recorded calls",
+    noteRecs:"Quality = loudness before → after cleanup (closer to 0 is louder). Play buttons work for 1 hour, then Refresh.",
+    hideNoAnswer:"Hide no-answer attempts",
+    colWhen:"When", colLength:"Length", colType:"Type", colCapture:"Capture", colQuality:"Quality",
+    colInsights:"Insights", colListen:"Listen",
+    captureOk:"✓ ok", captureSilent:"✗ silent", waitingCleanup:"waiting for cleanup",
+    rawNotClean:"raw (not cleaned yet)", emptyRecs:"No recordings yet",
+    analyzing:"analyzing…", transcribing:"transcribing…", noAnswerPill:"☎ called — no answer",
+    check:"Check", details:"Details", coaching:"Coaching", summary:"Summary", transcript:"Transcript",
+    missed:"Missed calls",
+    noteMissed:"WhatsApp misses show the contact name (WhatsApp hides numbers). Callback tracking is for SIM calls.",
+    colChannel:"Channel", colFrom:"From", colCalledBackQ:"Called back?",
+    hiddenNumber:"hidden number", unknown:"unknown",
+    callbackAfterPre:"✓ after", callbackNot:"✗ not yet", emptyMissed:"No missed calls yet",
+    minUnit:"min", sentHappy:"🙂 happy", sentNeutral:"😐 neutral", sentUpset:"😠 upset",
+    leadInterested:"interested", leadFollowup:"follow-up", leadClosed:"closed", leadNotInterested:"not interested",
   },
   ar: {
     title:"صحة التسجيل", subtitle:"توقيت بغداد · آخر تحديث", refresh:"تحديث", logout:"خروج",
@@ -162,6 +210,26 @@ const T = {
     confirmForceDeleteClient:"لا يزال في هذا المركز أجهزة مسجّلة. هل تريد حذفه مع حذف هذه الأجهزة أيضاً؟ (التسجيلات المرفوعة مسبقاً لن تتأثر — وإذا كانت الأجهزة لا تزال نشطة فستظهر من جديد عند أول اتصال قادم.)",
     doneAdded:"تمت إضافة المركز.", doneDeleted:"تم حذف المركز.",
     hours:"س", minutes:"د", days:"ي",
+    analytics:"التحليلات", colAgent:"الوكيل",
+    agents:"الوكلاء", cRecorded:"مكالمات مسجلة", cTalk:"مدة التحدث", cScore:"متوسط تقييم المكالمة",
+    cConv:"تحويل العملاء", cCapture:"فحص التسجيل", cMissed:"مكالمات فائتة", cCalledBack:"معاودة الاتصال",
+    okSuffix:"سليم", emptyAgents:"لا توجد بيانات بعد — ثبّت التطبيق وأجرِ مكالمة",
+    recordedCalls:"المكالمات المسجلة",
+    noteRecs:"الجودة = مستوى الصوت قبل ← بعد التنقية (كلما اقترب من 0 كان أعلى). أزرار التشغيل تعمل لمدة ساعة، ثم اضغط تحديث.",
+    hideNoAnswer:"إخفاء المكالمات غير المُجابة",
+    colWhen:"الوقت", colLength:"المدة", colType:"النوع", colCapture:"الالتقاط", colQuality:"الجودة",
+    colInsights:"التحليلات", colListen:"استماع",
+    captureOk:"✓ سليم", captureSilent:"✗ صامت", waitingCleanup:"بانتظار التنقية",
+    rawNotClean:"خام (لم تتم تنقيته بعد)", emptyRecs:"لا توجد تسجيلات بعد",
+    analyzing:"جاري التحليل…", transcribing:"جاري التفريغ…", noAnswerPill:"☎ اتصل — لم يُرد",
+    check:"تحقّق", details:"التفاصيل", coaching:"نصائح", summary:"ملخص", transcript:"النص",
+    missed:"المكالمات الفائتة",
+    noteMissed:"مكالمات واتساب الفائتة تظهر باسم جهة الاتصال (واتساب يخفي الأرقام). تتبّع معاودة الاتصال لمكالمات الشريحة.",
+    colChannel:"القناة", colFrom:"من", colCalledBackQ:"عاود الاتصال؟",
+    hiddenNumber:"رقم مخفي", unknown:"غير معروف",
+    callbackAfterPre:"✓ بعد", callbackNot:"✗ ليس بعد", emptyMissed:"لا توجد مكالمات فائتة بعد",
+    minUnit:"دقيقة", sentHappy:"🙂 سعيد", sentNeutral:"😐 محايد", sentUpset:"😠 منزعج",
+    leadInterested:"مهتم", leadFollowup:"متابعة", leadClosed:"مغلق", leadNotInterested:"غير مهتم",
   },
 };
 let lang = localStorage.getItem("shareek_lang") || "ar";
@@ -214,6 +282,9 @@ let timer = null;
 let adminMode = false;  // master-only Accounts view
 let adminData = null;   // { users, clients }
 let adminMsg = "";      // last action feedback
+let analyticsMode = false;  // master-only Analytics view
+let analyticsData = null;   // { recordings, missed_calls }
+let analyticsMsg = "";      // last error/feedback message
 
 // ---- status helpers ----------------------------------------------------------
 function statusMeta(s) {
@@ -483,15 +554,23 @@ function render() {
       <button class="${lang === "ar" ? "active" : ""}" onclick="setLang('ar')">العربية</button>
       <button class="${lang === "en" ? "active" : ""}" onclick="setLang('en')">English</button>
     </div>
-    ${!adminMode ? `<button onclick="load()">${t("refresh")}</button>` : ""}
+    ${!adminMode && !analyticsMode ? `<button onclick="load()">${t("refresh")}</button>` : ""}
     ${isMaster ? (adminMode
       ? `<button class="ghost" onclick="closeAccounts()">${t("backToHealth")}</button>`
-      : `<button class="ghost" onclick="openAccounts()">${t("accounts")}</button>`) : ""}
+      : analyticsMode
+      ? `<button class="ghost" onclick="closeAnalytics()">${t("backToHealth")}</button>`
+      : `<button class="ghost" onclick="openAccounts()">${t("accounts")}</button>
+         <button class="ghost" onclick="openAnalytics()">${t("analytics")}</button>`) : ""}
     <button class="ghost" onclick="logout()">${t("logout")}</button>
   </header>`;
 
   if (adminMode && isMaster) {
     app.innerHTML = header + `<div class="wrap">${adminPanel()}</div>`;
+    return;
+  }
+
+  if (analyticsMode && isMaster) {
+    app.innerHTML = header + `<div class="wrap">${analyticsPanel()}</div>`;
     return;
   }
 
@@ -701,6 +780,146 @@ async function deleteClient(code) {
   }
   adminMsg = ok ? t("doneDeleted") : (j.error || t("serverError")); await refreshAdmin();
 }
+
+// ---- Analytics panel (master only) — call recordings + AI insights + missed calls ----
+const scoreColor = s => s >= 80 ? "#1d7a4d" : s >= 60 ? "#b8860b" : s >= 40 ? "#d35400" : "#c0392b";
+const sentClass = { happy:"sent-happy", neutral:"sent-neutral", frustrated:"sent-frustrated" };
+const sentText = s => ({ happy:t("sentHappy"), neutral:t("sentNeutral"), frustrated:t("sentUpset") }[s] || esc(s));
+const leadText = l => ({ interested:t("leadInterested"), needs_followup:t("leadFollowup"), closed:t("leadClosed"),
+  not_interested:t("leadNotInterested"), na:"—" }[l] || esc(l));
+const mins = sec => (sec ? Math.round(sec / 6) / 10 : 0) + " " + t("minUnit");
+
+// One recording's insights cell: score + sentiment + lead + topics, with an
+// expander for the summary, coaching tips, and full transcript.
+function insightCell(r) {
+  if (r.call_outcome === "no_answer") {
+    const pill = `<span class="pill noans">${t("noAnswerPill")}</span>`;
+    const check = r.transcript
+      ? `<details class="insight"><summary>${t("check")}</summary>
+        <div class="body"><div class="transcript">${esc(r.transcript)}</div></div></details>` : "";
+    return pill + check;
+  }
+  const a = r.analysis;
+  if (!a) return r.transcript ? `<small>${t("analyzing")}</small>`
+    : (r.status === "cleaned" || r.status === "transcribed") ? `<small>${t("transcribing")}</small>` : "—";
+  const score = typeof a.agent_score === "number"
+    ? `<span class="score" style="background:${scoreColor(a.agent_score)}">${a.agent_score}</span>` : "";
+  const sent = a.sentiment ? `<span class="pill ${sentClass[a.sentiment] || ""}">${sentText(a.sentiment)}</span>` : "";
+  const lead = a.lead_outcome ? `<span class="pill lead">${leadText(a.lead_outcome)}</span>` : "";
+  const topics = Array.isArray(a.topics) && a.topics.length
+    ? `<div class="topics">${a.topics.map(esc).join(" · ")}</div>` : "";
+  const coaching = Array.isArray(a.agent_coaching) && a.agent_coaching.length
+    ? `<b>${t("coaching")}</b><ul>${a.agent_coaching.map(t2 => `<li>${esc(t2)}</li>`).join("")}</ul>` : "";
+  const summary = a.summary ? `<b>${t("summary")}</b><div>${esc(a.summary)}</div>` : "";
+  const transcript = r.transcript ? `<b>${t("transcript")}</b><div class="transcript">${esc(r.transcript)}</div>` : "";
+  return `<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">${score}${sent}${lead}</div>${topics}
+    <details class="insight"><summary>${t("details")}</summary>
+      <div class="body">${summary}${coaching}${transcript}</div></details>`;
+}
+
+function analyticsPanel() {
+  if (!analyticsData) return `<div id="loading">${t("loading")}</div>`;
+  const recs = analyticsData.recordings || [];
+  const misses = analyticsData.missed_calls || [];
+
+  // per-agent scoreboard
+  const agentsMap = new Map();
+  const agg = n => { if (!agentsMap.has(n)) agentsMap.set(n, { calls:0, seconds:0, checked:0, passed:0, missed:0, back:0, cb:[], scores:[], leadCalls:0, won:0 }); return agentsMap.get(n); };
+  for (const r of recs) {
+    const a = agg(`${r.agent_name} (${r.call_center_code})`);
+    a.calls++; a.seconds += r.duration_seconds || 0;
+    if (r.self_check_passed !== null) { a.checked++; if (r.self_check_passed) a.passed++; }
+    if (r.analysis) {
+      if (typeof r.analysis.agent_score === "number") a.scores.push(r.analysis.agent_score);
+      if (r.analysis.lead_outcome && r.analysis.lead_outcome !== "na") {
+        a.leadCalls++; if (r.analysis.lead_outcome === "closed") a.won++;
+      }
+    }
+  }
+  for (const m of misses) {
+    const a = agg(`${m.agent_name} (${m.call_center_code})`);
+    a.missed++;
+    if (m.called_back) { a.back++; if (m.callback_after_minutes != null) a.cb.push(+m.callback_after_minutes); }
+  }
+  const cards = [...agentsMap.entries()].map(([name, a]) => {
+    const rate = a.missed ? Math.round(a.back / a.missed * 100) : null;
+    const avg = a.cb.length ? (a.cb.reduce((x,y)=>x+y,0)/a.cb.length).toFixed(0) : null;
+    const avgScore = a.scores.length ? Math.round(a.scores.reduce((x,y)=>x+y,0)/a.scores.length) : null;
+    const conv = a.leadCalls ? Math.round(a.won / a.leadCalls * 100) : null;
+    return `<div class="agent"><b>${esc(name)}</b>
+      <div class="row"><span>${t("cRecorded")}</span><span>${a.calls}</span></div>
+      <div class="row"><span>${t("cTalk")}</span><span>${mins(a.seconds)}</span></div>
+      <div class="row"><span>${t("cScore")}</span><span>${avgScore === null ? "—" : `<span class="score" style="background:${scoreColor(avgScore)}">${avgScore}</span>`}</span></div>
+      <div class="row"><span>${t("cConv")}</span><span>${conv === null ? "—" : conv + "% (" + a.won + "/" + a.leadCalls + ")"}</span></div>
+      <div class="row"><span>${t("cCapture")}</span><span>${a.checked ? a.passed + "/" + a.checked + " " + t("okSuffix") : "—"}</span></div>
+      <div class="row"><span>${t("cMissed")}</span><span>${a.missed}</span></div>
+      <div class="row"><span>${t("cCalledBack")}</span><span>${rate === null ? "—" : rate + "%" + (avg ? " (~" + avg + " " + t("minUnit") + ")" : "")}</span></div>
+    </div>`;
+  }).join("") || `<div class="empty">${t("emptyAgents")}</div>`;
+
+  const recRows = recs.map(r => `<tr class="${r.call_outcome === "no_answer" ? "no-answer" : ""}">
+    <td>${esc(r.agent_name)}<br><span class="sub">${esc(r.call_center_code)}</span></td>
+    <td>${fmtTime(r.started_at)}</td>
+    <td>${mins(r.duration_seconds)}</td>
+    <td><span class="pill ${r.call_type === "SIM" ? "sim" : "wa"}">${esc(r.call_type || "—")}</span></td>
+    <td>${r.self_check_passed == null ? "—" : r.self_check_passed ? `<span class="ok">${t("captureOk")}</span>` : `<span class="bad">${t("captureSilent")}</span>`}</td>
+    <td>${r.raw_dbfs != null ? esc(r.raw_dbfs) + " → <b>" + esc(r.clean_dbfs ?? "…") + "</b> dBFS" : (r.status === "uploaded" ? t("waitingCleanup") : "—")}</td>
+    <td>${esc(r.status)}</td>
+    <td>${insightCell(r)}</td>
+    <td>${r.audio_url ? `<audio controls preload="none" src="${esc(r.audio_url)}"></audio>${r.audio_is_clean ? "" : `<br><span class="sub">${t("rawNotClean")}</span>`}` : "—"}</td>
+  </tr>`).join("");
+
+  const missRows = misses.map(m => `<tr>
+    <td>${esc(m.agent_name)}<br><span class="sub">${esc(m.call_center_code)}</span></td>
+    <td><span class="pill ${m.channel === "SIM" ? "sim" : "wa"}">${esc(m.channel)}</span></td>
+    <td>${esc(m.channel === "SIM" ? (m.phone_number || t("hiddenNumber")) : (m.contact_name || t("unknown")))}</td>
+    <td>${fmtTime(m.missed_at)}</td>
+    <td>${m.channel !== "SIM" ? "—" : m.called_back
+      ? `<span class="ok">${t("callbackAfterPre")} ${esc(m.callback_after_minutes)} ${t("minUnit")}</span>`
+      : `<span class="bad">${t("callbackNot")}</span>`}</td>
+  </tr>`).join("");
+
+  return `
+    ${analyticsMsg ? `<p class="note" style="color:var(--gGreen);font-weight:600">${esc(analyticsMsg)}</p>` : ""}
+    <h2>${t("agents")}</h2>
+    <div class="cards">${cards}</div>
+
+    <h2>${t("recordedCalls")}</h2>
+    <p class="note">${t("noteRecs")}</p>
+    <label class="toggle"><input type="checkbox" ${document.body.classList.contains("hide-no-answer") ? "checked" : ""}
+      onchange="document.body.classList.toggle('hide-no-answer', this.checked)">
+      ${t("hideNoAnswer")}</label>
+    <div class="scroll">${recs.length ? `<table>
+      <tr><th>${t("colAgent")}</th><th>${t("colWhen")}</th><th>${t("colLength")}</th><th>${t("colType")}</th><th>${t("colCapture")}</th><th>${t("colQuality")}</th><th>${t("colStatus")}</th><th>${t("colInsights")}</th><th>${t("colListen")}</th></tr>
+      ${recRows}</table>` : `<div class="empty">${t("emptyRecs")}</div>`}</div>
+
+    <h2>${t("missed")}</h2>
+    <p class="note">${t("noteMissed")}</p>
+    <div class="scroll">${misses.length ? `<table>
+      <tr><th>${t("colAgent")}</th><th>${t("colChannel")}</th><th>${t("colFrom")}</th><th>${t("colWhen")}</th><th>${t("colCalledBackQ")}</th></tr>
+      ${missRows}</table>` : `<div class="empty">${t("emptyMissed")}</div>`}</div>`;
+}
+
+async function analyticsCall(retried) {
+  let res;
+  try {
+    res = await fetch(ANALYTICS_API, {
+      method: "POST",
+      headers: { apikey: ANON, Authorization: "Bearer " + session.access_token, "content-type": "application/json" },
+      body: JSON.stringify({}),
+    });
+  } catch (e) { return { ok: false, j: { error: t("noConn") } }; }
+  if (res.status === 401 && !retried && await refreshSession()) return analyticsCall(true);
+  const j = await res.json().catch(() => ({}));
+  return { ok: res.ok, status: res.status, j };
+}
+
+async function openAnalytics() { analyticsMode = true; analyticsData = null; analyticsMsg = ""; render();
+  const { ok, j } = await analyticsCall();
+  if (ok) analyticsData = j; else analyticsMsg = j.error || t("serverError");
+  render();
+}
+function closeAnalytics() { analyticsMode = false; analyticsMsg = ""; render(); }
 
 applyLang();
 loginScreen();
