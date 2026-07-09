@@ -187,7 +187,7 @@ const T = {
     note:"<b>Green</b> = recording & healthy. <b>Red</b> = follow up: <i>Offline</i> (phone off / no internet), <i>Went dark</i> (no check-in for a day — likely off or app removed), <i>Not recording</i> (Shizuku off), low <i>battery</i> (&lt;15% unplugged) or nearly-full <i>storage</i> (&lt;300 MB). 🔌 = charging. Grey = paused.",
     accounts:"Accounts", backToHealth:"← Back to health", accountsTitle:"Dashboard logins",
     colEmail:"Email", colRole:"Role", colClient:"Client", colActive:"Status",
-    roleMaster:"Master", roleSupervisor:"Supervisor", statusActive:"active", statusDisabled:"disabled",
+    roleMaster:"Master", roleAdmin:"Admin", roleSupervisor:"Supervisor", statusActive:"active", statusDisabled:"disabled",
     addTitle:"Add a supervisor login", phEmail:"email", phPassword:"password (min 6)", pickClient:"— choose client —",
     addBtn:"Create", resetBtn:"Reset password", disableBtn:"Disable", enableBtn:"Enable", deleteBtn:"Delete",
     newPwPrompt:"New password for", confirmDelete:"Delete this login?", saving:"Saving…",
@@ -253,7 +253,7 @@ const T = {
     note:"<b>أخضر</b> = يسجّل وسليم. <b>أحمر</b> = يحتاج متابعة: <i>غير متصل</i> (الجهاز مطفأ أو لا إنترنت)، <i>انقطع</i> (لا اتصال منذ يوم — غالباً مطفأ أو حُذف التطبيق)، <i>لا يسجّل</i> (Shizuku متوقف)، <i>بطارية</i> منخفضة (أقل من 15% وغير موصول) أو <i>تخزين</i> شبه ممتلئ (أقل من 300 ميغابايت). 🔌 = يشحن. رمادي = موقوف.",
     accounts:"الحسابات", backToHealth:"← رجوع للصحة", accountsTitle:"حسابات الدخول",
     colEmail:"البريد", colRole:"الدور", colClient:"المركز", colActive:"الحالة",
-    roleMaster:"مدير", roleSupervisor:"مشرف", statusActive:"مفعّل", statusDisabled:"موقوف",
+    roleMaster:"مدير", roleAdmin:"مسؤول", roleSupervisor:"مشرف", statusActive:"مفعّل", statusDisabled:"موقوف",
     addTitle:"إضافة حساب مشرف", phEmail:"البريد الإلكتروني", phPassword:"كلمة المرور (٦ على الأقل)", pickClient:"— اختر المركز —",
     addBtn:"إنشاء", resetBtn:"تغيير كلمة المرور", disableBtn:"إيقاف", enableBtn:"تفعيل", deleteBtn:"حذف",
     newPwPrompt:"كلمة مرور جديدة لـ", confirmDelete:"حذف هذا الحساب؟", saving:"جاري الحفظ…",
@@ -345,7 +345,7 @@ let session = null;     // { access_token, refresh_token } — kept in memory on
 let data = null;        // last server payload
 let selectedCode = null;
 let timer = null;
-let adminMode = false;  // master-only Accounts view
+let adminMode = false;  // Accounts view (master + admin/field-tech)
 let adminData = null;   // { users, clients }
 let adminMsg = "";      // last action feedback
 let analyticsMode = false;  // master-only Analytics view
@@ -612,6 +612,8 @@ function sortedClients() {
 function render() {
   applyLang();
   const isMaster = data.role === "master";
+  const isAdmin = data.role === "admin";
+  const canManage = isMaster || isAdmin;   // can open the Accounts panel + see every client
   const clients = data.clients || [];
   const sorted = sortedClients();
 
@@ -622,16 +624,16 @@ function render() {
       <button class="${lang === "en" ? "active" : ""}" onclick="setLang('en')">English</button>
     </div>
     ${!adminMode && !analyticsMode ? `<button onclick="load()">${t("refresh")}</button>` : ""}
-    ${isMaster ? (adminMode
+    ${canManage && adminMode
       ? `<button class="ghost" onclick="closeAccounts()">${t("backToHealth")}</button>`
-      : analyticsMode
+      : isMaster && analyticsMode
       ? `<button class="ghost" onclick="closeAnalytics()">${t("backToHealth")}</button>`
-      : `<button class="ghost" onclick="openAccounts()">${t("accounts")}</button>
-         <button class="ghost" onclick="openAnalytics()">${t("analytics")}</button>`) : ""}
+      : `${canManage ? `<button class="ghost" onclick="openAccounts()">${t("accounts")}</button>` : ""}
+         ${isMaster ? `<button class="ghost" onclick="openAnalytics()">${t("analytics")}</button>` : ""}`}
     <button class="ghost" onclick="logout()">${t("logout")}</button>
   </header>`;
 
-  if (adminMode && isMaster) {
+  if (adminMode && canManage) {
     app.innerHTML = header + `<div class="wrap">${adminPanel()}</div>`;
     return;
   }
@@ -648,8 +650,8 @@ function render() {
 
   let body = "";
 
-  if (isMaster) {
-    // overview cards (clickable) + tab bar
+  if (canManage) {
+    // overview cards (clickable) + tab bar — master and admin both see every client
     const cards = sorted.map(c => {
       const r = rollup(c);
       const light = r.attention ? RED : GREEN;
@@ -705,24 +707,27 @@ function route() { if (session && data) render(); else loginScreen(); }
 // ---- Accounts panel (master only) --------------------------------------------
 function adminPanel() {
   if (!adminData) return `<div id="loading">${t("loading")}</div>`;
+  const isMasterCaller = data.role === "master";   // admins see the panel but with limited powers
   const clients = adminData.clients || [];
   const users = adminData.users || [];
   const clientName = code => (clients.find(c => c.call_center_code === code)?.display_name) || code || "—";
   const rows = users.map(u => {
     const em = esc(u.email || "");
-    const isM = u.role === "master";
-    const scope = isM ? `<span class="sub">${t("allClientsTag")}</span>` : esc(clientName(u.call_center_code));
+    const isPriv = u.role === "master" || u.role === "admin";   // privileged rows only a master may touch
+    const roleLabel = u.role === "master" ? t("roleMaster") : u.role === "admin" ? t("roleAdmin") : t("roleSupervisor");
+    const scope = isPriv ? `<span class="sub">${t("allClientsTag")}</span>` : esc(clientName(u.call_center_code));
     const status = u.active ? `<span class="clean">${t("statusActive")}</span>` : `<span class="att">${t("statusDisabled")}</span>`;
-    return `<tr>
-      <td>${em}</td>
-      <td>${isM ? t("roleMaster") : t("roleSupervisor")}</td>
-      <td>${scope}</td>
-      <td>${status}</td>
-      <td class="acts">
+    const canEditRow = isMasterCaller || !isPriv;   // an admin may only manage supervisor logins
+    const acts = canEditRow ? `
         <button onclick="resetPw('${em}')">${t("resetBtn")}</button>
         <button onclick="toggleActive('${em}',${u.active ? "false" : "true"})">${u.active ? t("disableBtn") : t("enableBtn")}</button>
-        <button class="danger" onclick="delUser('${em}')">${t("deleteBtn")}</button>
-      </td></tr>`;
+        ${isMasterCaller ? `<button class="danger" onclick="delUser('${em}')">${t("deleteBtn")}</button>` : ""}` : `<span class="sub">—</span>`;
+    return `<tr>
+      <td>${em}</td>
+      <td>${roleLabel}</td>
+      <td>${scope}</td>
+      <td>${status}</td>
+      <td class="acts">${acts}</td></tr>`;
   }).join("");
   const opts = clients.map(c => `<option value="${esc(c.call_center_code)}">${esc(c.display_name || c.call_center_code)}</option>`).join("");
   const clientRows = clients.map(c => {
@@ -738,7 +743,7 @@ function adminPanel() {
       <td class="acts">
         <button onclick="renameClient('${cc}')">${t("renameBtn")}</button>
         <button onclick="toggleClient('${cc}',${active ? "false" : "true"})">${active ? t("deactivateBtn") : t("activateBtn")}</button>
-        <button class="danger" onclick="deleteClient('${cc}')">${t("deleteBtn")}</button>
+        ${isMasterCaller ? `<button class="danger" onclick="deleteClient('${cc}')">${t("deleteBtn")}</button>` : ""}
       </td></tr>`;
   }).join("");
   return `
@@ -751,6 +756,10 @@ function adminPanel() {
     <div class="addform">
       <input id="nu_email" type="email" autocomplete="off" placeholder="${t("phEmail")}">
       <input id="nu_pw" type="text" autocomplete="off" placeholder="${t("phPassword")}">
+      ${isMasterCaller ? `<select id="nu_role" onchange="onRoleChange()">
+        <option value="supervisor">${t("roleSupervisor")}</option>
+        <option value="admin">${t("roleAdmin")}</option>
+      </select>` : ""}
       <select id="nu_client"><option value="">${t("pickClient")}</option>${opts}</select>
       <button onclick="addUser()">${t("addBtn")}</button>
     </div>
@@ -788,13 +797,20 @@ async function openAccounts() { adminMode = true; adminData = null; adminMsg = "
 function closeAccounts() { adminMode = false; adminMsg = ""; render(); }
 async function refreshAdmin() { const { ok, j } = await adminCall({ action: "list" }); if (ok) adminData = j; render(); }
 
+// Hide the client picker when the master is creating an admin (admins aren't tied to one client).
+function onRoleChange() {
+  const role = document.getElementById("nu_role")?.value || "supervisor";
+  const sel = document.getElementById("nu_client");
+  if (sel) sel.style.display = role === "admin" ? "none" : "";
+}
 async function addUser() {
   const email = (document.getElementById("nu_email")?.value || "").trim();
   const password = document.getElementById("nu_pw")?.value || "";
+  const role = document.getElementById("nu_role")?.value || "supervisor";  // only the master sees this picker
   const code = document.getElementById("nu_client")?.value || "";
   if (!email || !password) return;
   adminMsg = t("saving"); render();
-  const { ok, j } = await adminCall({ action: "add_user", email, password, call_center_code: code, role: "supervisor" });
+  const { ok, j } = await adminCall({ action: "add_user", email, password, call_center_code: code, role });
   adminMsg = ok ? (j.created ? t("doneCreated") : t("doneUpdated")) : (j.error || t("serverError"));
   await refreshAdmin();
 }
