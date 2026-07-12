@@ -957,11 +957,11 @@ function adminPanel() {
     <div class="addform">
       <input id="nu_email" type="email" autocomplete="off" placeholder="${t("phEmail")}">
       <input id="nu_pw" type="text" autocomplete="off" placeholder="${t("phPassword")}">
-      ${isMasterCaller ? `<select id="nu_role" onchange="onRoleChange()">
+      <select id="nu_role" onchange="onRoleChange()">
         <option value="supervisor">${t("roleSupervisor")}</option>
         <option value="ceo">${t("roleCeo")}</option>
-        <option value="admin">${t("roleAdmin")}</option>
-      </select>` : ""}
+        ${isMasterCaller ? `<option value="admin">${t("roleAdmin")}</option>` : ""}
+      </select>
       <select id="nu_client"><option value="">${t("pickClient")}</option>${opts}</select>
       <button onclick="addUser()">${t("addBtn")}</button>
     </div>
