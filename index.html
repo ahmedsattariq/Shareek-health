@@ -195,6 +195,7 @@ const SB = "https://pxeiozmsfvmypcsqbcqv.supabase.co";
 const API = SB + "/functions/v1/health";
 const ADMIN_API = SB + "/functions/v1/admin";
 const ANALYTICS_API = SB + "/functions/v1/analytics";
+const EMPLOYEES_API = SB + "/functions/v1/employees";
 // Public anon key — identifies the project to Supabase Auth + the function gateway. The real gate is
 // the user's email + password (Supabase Auth). Safe to ship in client HTML.
 const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4ZWlvem1zZnZteXBjc3FiY3F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwNDI1MTcsImV4cCI6MjA5NzYxODUxN30.s23PCgc_HuGRUSdN3hMNXBsdsavofLBIZj3Ppq5lP94";
@@ -230,6 +231,10 @@ const T = {
     never:"never", ago:"ago", lastSeen:"last seen", emptyPhones:"No phones in this client yet.",
     note:"<b>Green</b> = recording & healthy. <b>Red</b> = follow up: <i>Offline</i> (phone off / no internet), <i>Went dark</i> (no check-in for a day — likely off or app removed), <i>Not recording</i> (Shizuku off), low <i>battery</i> (&lt;15% unplugged) or nearly-full <i>storage</i> (&lt;300 MB). 🔌 = charging. Grey = paused.",
     accounts:"Accounts", backToHealth:"← Back to dashboard", accountsTitle:"Dashboard logins",
+    employeesMenu:"Employees", employeesTitle:"Center employees", employeesNote:"Employees use their name and a 4-digit PIN to clock in on shared Shareek phones.",
+    addEmployee:"Add employee", employeeName:"employee name", employeePin:"4-digit PIN", noEmployees:"No employees added yet.",
+    renameEmployee:"Rename", resetPin:"Reset PIN", deactivateEmployee:"Deactivate", activateEmployee:"Activate",
+    newEmployeeName:"New name for", newEmployeePin:"New 4-digit PIN for", employeeAdded:"Employee added.",
     colEmail:"Email", colRole:"Role", colClient:"Client", colActive:"Status",
     roleMaster:"Master", roleAdmin:"Admin", roleCeo:"CEO", roleSupervisor:"Supervisor", statusActive:"active", statusDisabled:"disabled",
     addTitle:"Add a dashboard login", phEmail:"email", phPassword:"password (min 6)", pickClient:"— choose client —",
@@ -303,6 +308,10 @@ const T = {
     never:"أبداً", ago:"منذ", lastSeen:"آخر ظهور", emptyPhones:"لا توجد أجهزة في هذا المركز بعد.",
     note:"<b>أخضر</b> = يسجّل وسليم. <b>أحمر</b> = يحتاج متابعة: <i>غير متصل</i> (الجهاز مطفأ أو لا إنترنت)، <i>انقطع</i> (لا اتصال منذ يوم — غالباً مطفأ أو حُذف التطبيق)، <i>لا يسجّل</i> (Shizuku متوقف)، <i>بطارية</i> منخفضة (أقل من 15% وغير موصول) أو <i>تخزين</i> شبه ممتلئ (أقل من 300 ميغابايت). 🔌 = يشحن. رمادي = موقوف.",
     accounts:"الحسابات", backToHealth:"← رجوع للوحة", accountsTitle:"حسابات الدخول",
+    employeesMenu:"الموظفون", employeesTitle:"موظفو المركز", employeesNote:"يستخدم الموظف اسمه ورمزاً من ٤ أرقام لتسجيل بداية دوامه على هواتف شريك المشتركة.",
+    addEmployee:"إضافة موظف", employeeName:"اسم الموظف", employeePin:"رمز من ٤ أرقام", noEmployees:"لم تتم إضافة موظفين بعد.",
+    renameEmployee:"تغيير الاسم", resetPin:"إعادة تعيين الرمز", deactivateEmployee:"إيقاف", activateEmployee:"تفعيل",
+    newEmployeeName:"الاسم الجديد لـ", newEmployeePin:"رمز جديد من ٤ أرقام لـ", employeeAdded:"تمت إضافة الموظف.",
     colEmail:"البريد", colRole:"الدور", colClient:"المركز", colActive:"الحالة",
     roleMaster:"مدير", roleAdmin:"مسؤول", roleCeo:"مدير تنفيذي", roleSupervisor:"مشرف", statusActive:"مفعّل", statusDisabled:"موقوف",
     addTitle:"إضافة حساب للوحة", phEmail:"البريد الإلكتروني", phPassword:"كلمة المرور (٦ على الأقل)", pickClient:"— اختر المركز —",
@@ -413,6 +422,9 @@ let analyticsMode = false;  // Analytics view: master across all companies, CEO 
 let analyticsData = null;   // CEO analytics payload (mock for now)
 let analyticsMsg = "";      // last error/feedback message
 let analyticsTab = "employees"; // employee ratings are the analytics landing view
+let employeesMode = false;
+let employeesData = null;
+let employeesMsg = "";
 let simulatorMode = false;  // true only for local, fictional account previews
 let simulatorPickerOpen = false;
 let simulatorRole = null;
@@ -806,6 +818,7 @@ function render() {
   const isMaster = data.role === "master";
   const isAdmin = data.role === "admin";
   const isCeo = data.role === "ceo";
+  const isSupervisor = data.role === "supervisor";
   const canManage = isMaster || isAdmin;   // can open the Accounts panel + see every client
   const canAnalytics = isMaster || isCeo;
   const clients = data.clients || [];
@@ -822,13 +835,16 @@ function render() {
       <button class="${lang === "ar" ? "active" : ""}" onclick="setLang('ar')">العربية</button>
       <button class="${lang === "en" ? "active" : ""}" onclick="setLang('en')">English</button>
     </div>
-    ${!adminMode && !analyticsMode ? `<button onclick="load()">${t("refresh")}</button>` : ""}
-    ${canManage && adminMode
+    ${!adminMode && !analyticsMode && !employeesMode ? `<button onclick="load()">${t("refresh")}</button>` : ""}
+    ${isSupervisor && employeesMode
+      ? `<button class="ghost" onclick="closeEmployees()">${t("backToHealth")}</button>`
+      : canManage && adminMode
       ? `<button class="ghost" onclick="closeAccounts()">${t("backToHealth")}</button>`
       : canAnalytics && analyticsMode
       ? `<button class="ghost" onclick="closeAnalytics()">${t("backToHealth")}</button>`
       : `${canManage ? `<button class="ghost" onclick="openAccounts()">${t("accounts")}</button>` : ""}
          ${canAnalytics ? `<button class="ghost" onclick="openAnalytics()">${t("analytics")}</button>` : ""}
+         ${isSupervisor ? `<button class="ghost" onclick="openEmployees()">${t("employeesMenu")}</button>` : ""}
          ${isMaster && !simulatorMode ? `<button class="ghost" onclick="showSimulator()">${t("simulatorMenu")}</button>` : ""}`}
     <button class="ghost" onclick="logout()">${t("logout")}</button>
   </header>`;
@@ -840,6 +856,11 @@ function render() {
 
   if (analyticsMode && canAnalytics) {
     app.innerHTML = header + `<div class="wrap">${analyticsPanel()}</div>`;
+    return;
+  }
+
+  if (employeesMode && isSupervisor) {
+    app.innerHTML = header + `<div class="wrap">${employeesPanel()}</div>`;
     return;
   }
 
@@ -899,10 +920,45 @@ function clientSection(c) {
 
 // ---- controls ----------------------------------------------------------------
 function selectClient(cc) { selectedCode = cc; render(); }
-function logout() { simulatorMode = false; simulatorPickerOpen = false; simulatorRole = null; liveDataBeforeSimulation = null; session = null; data = null; selectedCode = null; stopTimer(); loginScreen(); }
+function logout() { simulatorMode = false; simulatorPickerOpen = false; simulatorRole = null; liveDataBeforeSimulation = null; employeesMode = false; employeesData = null; session = null; data = null; selectedCode = null; stopTimer(); loginScreen(); }
 function startTimer() { stopTimer(); if (!simulatorMode) timer = setInterval(() => { if (session) load(); }, REFRESH_MS); }
 function stopTimer() { if (timer) { clearInterval(timer); timer = null; } }
 function route() { if (simulatorPickerOpen) showSimulator(); else if (session && data) render(); else loginScreen(); }
+
+function employeesPanel() {
+  if (!employeesData) return `<div id="loading">${t("loading")}</div>`;
+  const rows = (employeesData.employees || []).map(e => `<tr class="${e.active ? "" : "muted"}">
+    <td><b>${esc(e.display_name)}</b></td>
+    <td>${e.active ? `<span class="ok">${t("statusActive")}</span>` : `<span class="bad">${t("statusDisabled")}</span>`}</td>
+    <td class="acts"><button onclick="renameEmployee('${esc(e.id)}','${esc(e.display_name)}')">${t("renameEmployee")}</button>
+      <button onclick="resetEmployeePin('${esc(e.id)}','${esc(e.display_name)}')">${t("resetPin")}</button>
+      <button onclick="setEmployeeActive('${esc(e.id)}',${e.active ? "false" : "true"})">${e.active ? t("deactivateEmployee") : t("activateEmployee")}</button></td>
+  </tr>`).join("");
+  return `<div class="${simulatorMode ? "sim-readonly" : ""}"><h2>${t("employeesTitle")}</h2>
+    <p class="note">${t("employeesNote")}</p>${employeesMsg ? `<p class="ok">${esc(employeesMsg)}</p>` : ""}
+    <div class="scroll">${rows ? `<table><tr><th>${t("employeeName")}</th><th>${t("colActive")}</th><th></th></tr>${rows}</table>` : `<div class="empty">${t("noEmployees")}</div>`}</div>
+    <h2>${t("addEmployee")}</h2><div class="addform"><input id="emp_name" placeholder="${t("employeeName")}">
+      <input id="emp_pin" inputmode="numeric" maxlength="4" placeholder="${t("employeePin")}"><button onclick="addEmployee()">${t("addEmployee")}</button></div></div>`;
+}
+
+async function employeeCall(payload) {
+  if (simulatorMode) return { ok:false, j:{ error:t("simulatorReadOnly") } };
+  try {
+    const res = await fetch(EMPLOYEES_API, { method:"POST", headers:{ apikey:ANON, Authorization:"Bearer " + session.access_token, "content-type":"application/json" }, body:JSON.stringify(payload) });
+    return { ok:res.ok, j:await res.json().catch(() => ({})) };
+  } catch { return { ok:false, j:{ error:t("noConn") } }; }
+}
+async function openEmployees() {
+  employeesMode = true; employeesMsg = "";
+  if (simulatorMode) { employeesData = { employees:[{id:"demo-1",display_name:lang === "ar" ? "أحمد علي" : "Ahmed Ali",active:true},{id:"demo-2",display_name:lang === "ar" ? "زينب كريم" : "Zainab Kareem",active:true}] }; render(); return; }
+  employeesData = null; render(); const {ok,j} = await employeeCall({action:"list"}); employeesData = ok ? j : {employees:[]}; employeesMsg = ok ? "" : (j.error || t("serverError")); render();
+}
+function closeEmployees() { employeesMode = false; employeesMsg = ""; render(); }
+async function refreshEmployees(msg) { const {ok,j} = await employeeCall({action:"list"}); if (ok) employeesData = j; employeesMsg = msg || (ok ? "" : j.error); render(); }
+async function addEmployee() { const display_name=(document.getElementById("emp_name")?.value||"").trim(), pin=document.getElementById("emp_pin")?.value||""; if (!display_name || !/^\d{4}$/.test(pin)) return; const {ok,j}=await employeeCall({action:"add",display_name,pin}); await refreshEmployees(ok?t("employeeAdded"):(j.error||t("serverError"))); }
+async function renameEmployee(id,name) { const display_name=prompt(t("newEmployeeName")+" "+name+":",name); if (!display_name) return; const {ok,j}=await employeeCall({action:"rename",employee_id:id,display_name}); await refreshEmployees(ok?t("doneSaved"):(j.error||t("serverError"))); }
+async function resetEmployeePin(id,name) { const pin=prompt(t("newEmployeePin")+" "+name+":"); if (!pin) return; const {ok,j}=await employeeCall({action:"set_pin",employee_id:id,pin}); await refreshEmployees(ok?t("doneSaved"):(j.error||t("serverError"))); }
+async function setEmployeeActive(id,active) { const {ok,j}=await employeeCall({action:"set_active",employee_id:id,active}); await refreshEmployees(ok?t("doneSaved"):(j.error||t("serverError"))); }
 
 // ---- Accounts panel (master only) --------------------------------------------
 function adminPanel() {
