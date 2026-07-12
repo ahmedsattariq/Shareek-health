@@ -1394,7 +1394,12 @@ function renderClients() {
 }
 
 function analyticsPanel() {
-  if (!analyticsData) return `<div id="loading">${t("loading")}</div>`;
+  // Self-heal after refresh/session recovery: Analytics is local sample data today, so there is
+  // nothing to wait for over the network. Recreate it immediately whenever the panel opens empty.
+  if (!analyticsData && data && (data.role === "master" || data.role === "ceo")) {
+    analyticsData = analyticsForCurrentRole();
+  }
+  if (!analyticsData) return `<div class="empty">${t("serverError")}</div>`;
   const tabs = [["employees","tabEmployees"],["overview","tabOverview"],["actions","tabActions"],
     ["risk","tabRisk"],["voice","tabVoice"],["trends","tabTrends"],["clients","tabClients"]];
   const nav = `<div class="tabs">${tabs.map(([id, k]) =>
