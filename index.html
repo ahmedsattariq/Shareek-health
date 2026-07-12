@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -50,6 +50,26 @@ header.top button.ghost { background:transparent; border:1px solid rgba(255,255,
 .login .forgot { margin-top:12px; }
 .login .forgot a { color:#274b7a; font-size:12px; text-decoration:none; cursor:pointer; margin:0 6px; }
 .login .info { color:var(--gGreen); font-size:12px; margin:0 0 8px; font-weight:600; }
+.login.sim-picker { max-width:820px; margin:7vh auto; }
+.sim-picker h2 { margin:0 0 5px; }
+.sim-picker .picker-note { margin-bottom:20px; }
+.sim-roles { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; text-align:start; }
+.sim-role { appearance:none; width:auto !important; margin:0 !important; padding:18px !important; background:#fff !important; color:var(--navy) !important;
+  border:2px solid var(--cream2) !important; border-radius:13px !important; text-align:start; min-height:180px; }
+.sim-role:hover, .sim-role:focus-visible { border-color:var(--green) !important; outline:none; transform:translateY(-1px); }
+.sim-role .sim-icon { display:inline-grid; place-items:center; width:38px; height:38px; border-radius:10px; background:#d9f2e4; font-size:20px; }
+.sim-role b { display:block; font-size:17px; margin-top:11px; }
+.sim-role span { display:block; color:#667; font-size:12px; line-height:1.6; margin-top:5px; }
+.sim-role small { display:block; color:#1d7a4d; font-size:11px; font-weight:700; margin-top:9px; }
+.sim-back { display:inline-block; margin-top:18px; color:#274b7a; font-size:12px; cursor:pointer; }
+.sim-banner { background:#fff3cd; color:#725500; padding:8px 16px; display:flex; justify-content:center; align-items:center; gap:10px;
+  font-size:12px; font-weight:700; border-bottom:1px solid #ead58c; text-align:center; }
+.sim-banner button { background:transparent; border:0; color:#274b7a; padding:0; font:inherit; text-decoration:underline; cursor:pointer; }
+@media (max-width:700px) {
+  .login.sim-picker { margin:20px 14px; padding:22px 16px; }
+  .sim-roles { grid-template-columns:1fr; }
+  .sim-role { min-height:0; }
+}
 
 /* ---- overview cards ---- */
 .overview { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px; margin:16px 0; }
@@ -88,6 +108,7 @@ h2 .att { color:var(--gRed); }
 td.acts { white-space:nowrap; }
 td.acts button { background:var(--navy); color:var(--cream); border:0; border-radius:7px; padding:5px 10px; font-size:12px; font-weight:600; cursor:pointer; font-family:inherit; margin-inline-end:5px; }
 td.acts button.danger { background:#c0392b; color:#fff; }
+.sim-readonly button, .sim-readonly input, .sim-readonly select { pointer-events:none; opacity:.48; }
 
 /* ---- CEO analytics dashboard ---- */
 .ok { color:var(--gGreen); font-weight:700; } .bad { color:#c0392b; font-weight:700; }
@@ -185,6 +206,13 @@ const T = {
     title:"Dashboard", subtitle:"Baghdad time · updated", refresh:"Refresh", logout:"Log out",
     loginTitle:"Dashboard", loginHint:"Sign in to continue",
     emailLabel:"Email", passwordLabel:"Password", loginBtn:"Sign in",
+    simulatorTitle:"Account simulator", simulatorHint:"Choose a role to see exactly what that account can access. No login is created and all data is fictional.",
+    simulatorMaster:"Master", simulatorMasterDesc:"Owner view across every client, including account management and CEO analytics.",
+    simulatorCeo:"CEO", simulatorCeoDesc:"Company view that opens on employee ratings, with Analytics and phone health for one company.",
+    simulatorAdmin:"Admin", simulatorAdminDesc:"Field-team view across every client, with safe supervisor and client management.",
+    simulatorSupervisor:"Supervisor", simulatorSupervisorDesc:"Client view limited to one call center and its phones.",
+    simulatorOpen:"Open preview", simulatorBack:"← Back to my dashboard", simulatorBanner:"Simulation · fictional data · no real account",
+    simulatorMenu:"Simulator", simulatorSwitch:"Switch role", simulatorExit:"Exit simulation", simulatorReadOnly:"Simulation only — no real changes were made.",
     loading:"Loading…", noConn:"No connection — check internet and try again.", serverError:"Server error",
     badCreds:"Wrong email or password.", noAccess:"This account has no dashboard access.",
     forgotLink:"Forgot password?", forgotTitle:"Reset password", forgotHint:"We'll email you a code",
@@ -203,8 +231,8 @@ const T = {
     note:"<b>Green</b> = recording & healthy. <b>Red</b> = follow up: <i>Offline</i> (phone off / no internet), <i>Went dark</i> (no check-in for a day — likely off or app removed), <i>Not recording</i> (Shizuku off), low <i>battery</i> (&lt;15% unplugged) or nearly-full <i>storage</i> (&lt;300 MB). 🔌 = charging. Grey = paused.",
     accounts:"Accounts", backToHealth:"← Back to dashboard", accountsTitle:"Dashboard logins",
     colEmail:"Email", colRole:"Role", colClient:"Client", colActive:"Status",
-    roleMaster:"Master", roleAdmin:"Admin", roleSupervisor:"Supervisor", statusActive:"active", statusDisabled:"disabled",
-    addTitle:"Add a supervisor login", phEmail:"email", phPassword:"password (min 6)", pickClient:"— choose client —",
+    roleMaster:"Master", roleAdmin:"Admin", roleCeo:"CEO", roleSupervisor:"Supervisor", statusActive:"active", statusDisabled:"disabled",
+    addTitle:"Add a dashboard login", phEmail:"email", phPassword:"password (min 6)", pickClient:"— choose client —",
     addBtn:"Create", resetBtn:"Reset password", disableBtn:"Disable", enableBtn:"Enable", deleteBtn:"Delete",
     newPwPrompt:"New password for", confirmDelete:"Delete this login?", saving:"Saving…",
     doneCreated:"Account created.", doneUpdated:"Account updated.", doneSaved:"Saved.", allClientsTag:"all clients",
@@ -251,6 +279,13 @@ const T = {
     title:"لوحة المعلومات", subtitle:"توقيت بغداد · آخر تحديث", refresh:"تحديث", logout:"خروج",
     loginTitle:"لوحة المعلومات", loginHint:"سجّل الدخول للمتابعة",
     emailLabel:"البريد الإلكتروني", passwordLabel:"كلمة المرور", loginBtn:"دخول",
+    simulatorTitle:"محاكي الحسابات", simulatorHint:"اختر نوع الحساب لترى بالضبط ما يمكنه الوصول إليه. لن يتم إنشاء حساب وكل البيانات تجريبية.",
+    simulatorMaster:"المدير", simulatorMasterDesc:"عرض المالك لكل المراكز، ويشمل إدارة الحسابات وتحليلات المدير التنفيذي.",
+    simulatorCeo:"المدير التنفيذي", simulatorCeoDesc:"عرض الشركة الذي يبدأ بتقييمات الموظفين، مع التحليلات وصحة الأجهزة لشركة واحدة.",
+    simulatorAdmin:"المسؤول", simulatorAdminDesc:"عرض فريق التجهيز لكل المراكز، مع إدارة آمنة للمشرفين والمراكز.",
+    simulatorSupervisor:"المشرف", simulatorSupervisorDesc:"عرض محدود لمركز اتصال واحد وأجهزته فقط.",
+    simulatorOpen:"فتح المعاينة", simulatorBack:"← رجوع إلى لوحتي", simulatorBanner:"وضع المحاكاة · بيانات تجريبية · لا يوجد حساب حقيقي",
+    simulatorMenu:"المحاكي", simulatorSwitch:"تغيير نوع الحساب", simulatorExit:"إنهاء المحاكاة", simulatorReadOnly:"هذه محاكاة فقط — لم يتم إجراء أي تغيير حقيقي.",
     loading:"جاري التحميل…", noConn:"لا يوجد اتصال — تحقق من الإنترنت وحاول مرة أخرى.", serverError:"خطأ في الخادم",
     badCreds:"بريد إلكتروني أو كلمة مرور غير صحيحة.", noAccess:"هذا الحساب لا يملك صلاحية الدخول للوحة.",
     forgotLink:"نسيت كلمة المرور؟", forgotTitle:"إعادة تعيين كلمة المرور", forgotHint:"سنرسل لك رمزاً بالبريد",
@@ -269,8 +304,8 @@ const T = {
     note:"<b>أخضر</b> = يسجّل وسليم. <b>أحمر</b> = يحتاج متابعة: <i>غير متصل</i> (الجهاز مطفأ أو لا إنترنت)، <i>انقطع</i> (لا اتصال منذ يوم — غالباً مطفأ أو حُذف التطبيق)، <i>لا يسجّل</i> (Shizuku متوقف)، <i>بطارية</i> منخفضة (أقل من 15% وغير موصول) أو <i>تخزين</i> شبه ممتلئ (أقل من 300 ميغابايت). 🔌 = يشحن. رمادي = موقوف.",
     accounts:"الحسابات", backToHealth:"← رجوع للوحة", accountsTitle:"حسابات الدخول",
     colEmail:"البريد", colRole:"الدور", colClient:"المركز", colActive:"الحالة",
-    roleMaster:"مدير", roleAdmin:"مسؤول", roleSupervisor:"مشرف", statusActive:"مفعّل", statusDisabled:"موقوف",
-    addTitle:"إضافة حساب مشرف", phEmail:"البريد الإلكتروني", phPassword:"كلمة المرور (٦ على الأقل)", pickClient:"— اختر المركز —",
+    roleMaster:"مدير", roleAdmin:"مسؤول", roleCeo:"مدير تنفيذي", roleSupervisor:"مشرف", statusActive:"مفعّل", statusDisabled:"موقوف",
+    addTitle:"إضافة حساب للوحة", phEmail:"البريد الإلكتروني", phPassword:"كلمة المرور (٦ على الأقل)", pickClient:"— اختر المركز —",
     addBtn:"إنشاء", resetBtn:"تغيير كلمة المرور", disableBtn:"إيقاف", enableBtn:"تفعيل", deleteBtn:"حذف",
     newPwPrompt:"كلمة مرور جديدة لـ", confirmDelete:"حذف هذا الحساب؟", saving:"جاري الحفظ…",
     doneCreated:"تم إنشاء الحساب.", doneUpdated:"تم تحديث الحساب.", doneSaved:"تم الحفظ.", allClientsTag:"كل المراكز",
@@ -314,7 +349,7 @@ const T = {
     dow:["الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت","الأحد"],
   },
 };
-let lang = localStorage.getItem("shareek_lang") || "ar";
+let lang = localStorage.getItem("shareek_lang") || "en";
 const t = k => (T[lang] && T[lang][k]) ?? T.en[k] ?? k;
 
 function applyLang() {
@@ -327,6 +362,10 @@ function setLang(l) {
   lang = l;
   localStorage.setItem("shareek_lang", l);
   applyLang();
+  if (simulatorMode && simulatorRole) {
+    data = simulatorPayload(simulatorRole);
+    if (adminMode) adminData = simulatorAdminPayload();
+  }
   route();
 }
 
@@ -370,10 +409,60 @@ let timer = null;
 let adminMode = false;  // Accounts view (master + admin/field-tech)
 let adminData = null;   // { users, clients }
 let adminMsg = "";      // last action feedback
-let analyticsMode = false;  // master-only Analytics view
+let analyticsMode = false;  // Analytics view: master across all companies, CEO for one company
 let analyticsData = null;   // CEO analytics payload (mock for now)
 let analyticsMsg = "";      // last error/feedback message
-let analyticsTab = "overview"; // active analytics sub-tab
+let analyticsTab = "employees"; // employee ratings are the analytics landing view
+let simulatorMode = false;  // true only for local, fictional account previews
+let simulatorPickerOpen = false;
+let simulatorRole = null;
+let liveDataBeforeSimulation = null; // the authenticated master's live view, restored on exit
+
+// Fictional data used by the account simulator. It never leaves this page and never touches Supabase.
+function simulatorPayload(role) {
+  const stamp = minutesAgo => new Date(Date.now() - minutesAgo * 60000).toISOString();
+  const phone = (id, agent, label, status, battery, storage, seen, recorded, extra = {}) => ({
+    install_id:id, agent_name:agent, label, roster_status:extra.roster_status || "expected", status,
+    battery_level:battery, battery_charging:!!extra.charging, storage_free_mb:storage,
+    reported_at:stamp(seen), last_recording_at:recorded == null ? null : stamp(recorded),
+    device_model:extra.device || "Samsung A15", app_version:"1.4.0",
+    low_battery:battery < 15 && !extra.charging, low_storage:storage < 300,
+  });
+  const clients = [
+    { call_center_code:"DEMO-KAR", display_name:lang === "ar" ? "مركز الكرادة" : "Karrada Center", phones:[
+      phone("demo-kar-1", lang === "ar" ? "زينب كريم" : "Zainab Kareem", lang === "ar" ? "الاستقبال" : "Front desk", "healthy", 82, 6800, 2, 18, { charging:true }),
+      phone("demo-kar-2", lang === "ar" ? "أحمد علي" : "Ahmed Ali", lang === "ar" ? "المبيعات ١" : "Sales 1", "not_recording", 46, 3100, 4, 185),
+      phone("demo-kar-3", lang === "ar" ? "سارة جاسم" : "Sara Jasim", lang === "ar" ? "المبيعات ٢" : "Sales 2", "offline", 12, 920, 68, 93),
+    ]},
+    { call_center_code:"DEMO-MAN", display_name:lang === "ar" ? "مركز المنصور" : "Mansour Center", phones:[
+      phone("demo-man-1", lang === "ar" ? "عمر حسن" : "Omar Hassan", lang === "ar" ? "الدعم" : "Support", "healthy", 67, 4200, 3, 11, { device:"Redmi Note 13" }),
+      phone("demo-man-2", lang === "ar" ? "مريم عباس" : "Maryam Abbas", lang === "ar" ? "المتابعة" : "Follow-up", "dark", 29, 740, 1560, 1620, { device:"Samsung A24" }),
+    ]},
+    { call_center_code:"DEMO-BAS", display_name:lang === "ar" ? "مركز البصرة" : "Basra Center", phones:[
+      phone("demo-bas-1", lang === "ar" ? "علي مهدي" : "Ali Mahdi", lang === "ar" ? "هاتف الفرع" : "Branch phone", "healthy", 91, 8100, 1, 7, { charging:true, device:"Samsung A34" }),
+      phone("demo-bas-2", lang === "ar" ? "نور حسين" : "Noor Hussein", lang === "ar" ? "هاتف احتياطي" : "Spare phone", "paused", 54, 5500, 12, 2880, { roster_status:"paused", device:"Samsung A13" }),
+    ]},
+  ];
+  return { role, generated_at:new Date().toISOString(), clients:["ceo", "supervisor"].includes(role) ? [clients[0]] : clients };
+}
+
+function simulatorAdminPayload() {
+  return {
+    users:[
+      { email:"owner@demo.shareek", role:"master", call_center_code:null, active:true },
+      { email:"field@demo.shareek", role:"admin", call_center_code:null, active:true },
+      { email:"ceo@demo.shareek", role:"ceo", call_center_code:"DEMO-KAR", active:true },
+      { email:"karrada@demo.shareek", role:"supervisor", call_center_code:"DEMO-KAR", active:true },
+      { email:"mansour@demo.shareek", role:"supervisor", call_center_code:"DEMO-MAN", active:true },
+      { email:"basra@demo.shareek", role:"supervisor", call_center_code:"DEMO-BAS", active:false },
+    ],
+    clients:[
+      { call_center_code:"DEMO-KAR", display_name:lang === "ar" ? "مركز الكرادة" : "Karrada Center", phone_count:3, active:true },
+      { call_center_code:"DEMO-MAN", display_name:lang === "ar" ? "مركز المنصور" : "Mansour Center", phone_count:2, active:true },
+      { call_center_code:"DEMO-BAS", display_name:lang === "ar" ? "مركز البصرة" : "Basra Center", phone_count:2, active:true },
+    ],
+  };
+}
 
 // ---- status helpers ----------------------------------------------------------
 function statusMeta(s) {
@@ -447,6 +536,7 @@ function phoneTable(client) {
 
 // ---- screens -----------------------------------------------------------------
 function loginScreen(err) {
+  simulatorPickerOpen = false;
   applyLang();
   app.innerHTML = `<div class="login">
     <div class="brand-box">${LOGO}<span>Shareek</span></div>
@@ -464,6 +554,73 @@ function loginScreen(err) {
   </div>`;
   const el = document.getElementById("email");
   if (el) el.focus();
+}
+
+function showSimulator() {
+  const ownerData = liveDataBeforeSimulation || data;
+  // The simulator is an owner-only surface: a real authenticated Master session must exist.
+  if (!session || ownerData?.role !== "master") {
+    simulatorMode = false;
+    simulatorPickerOpen = false;
+    simulatorRole = null;
+    return session && data ? render() : loginScreen();
+  }
+  stopTimer();
+  if (!liveDataBeforeSimulation) liveDataBeforeSimulation = data;
+  simulatorMode = false;
+  simulatorRole = null;
+  simulatorPickerOpen = true;
+  data = liveDataBeforeSimulation;
+  adminMode = false;
+  analyticsMode = false;
+  applyLang();
+  const roleCard = (role, icon, title, desc) => `<button class="sim-role" onclick="startSimulation('${role}')">
+    <span class="sim-icon">${icon}</span><b>${title}</b><span>${desc}</span><small>${t("simulatorOpen")} →</small>
+  </button>`;
+  app.innerHTML = `<div class="login sim-picker">
+    <div class="brand-box">${LOGO}<span>Shareek</span></div>
+    <h2>${t("simulatorTitle")}</h2>
+    <p class="picker-note">${t("simulatorHint")}</p>
+    <div class="sim-roles">
+      ${roleCard("master", "◆", t("simulatorMaster"), t("simulatorMasterDesc"))}
+      ${roleCard("ceo", "★", t("simulatorCeo"), t("simulatorCeoDesc"))}
+      ${roleCard("admin", "●", t("simulatorAdmin"), t("simulatorAdminDesc"))}
+      ${roleCard("supervisor", "✓", t("simulatorSupervisor"), t("simulatorSupervisorDesc"))}
+    </div>
+    <a class="sim-back" onclick="exitSimulator()">${t("simulatorBack")}</a>
+    <div class="lang"><a onclick="setLang('ar')">العربية</a> · <a onclick="setLang('en')">English</a></div>
+  </div>`;
+}
+
+function startSimulation(role) {
+  if (!session || !simulatorPickerOpen || liveDataBeforeSimulation?.role !== "master") return;
+  simulatorMode = true;
+  simulatorPickerOpen = false;
+  simulatorRole = role;
+  session = { simulated:true };
+  data = simulatorPayload(role);
+  adminData = null;
+  adminMode = false;
+  analyticsMode = role === "ceo";
+  analyticsTab = role === "ceo" ? "employees" : "overview";
+  analyticsData = role === "ceo" ? analyticsForCurrentRole() : null;
+  selectedCode = data.clients[0]?.call_center_code || null;
+  render();
+}
+
+function exitSimulator() {
+  if (!session || liveDataBeforeSimulation?.role !== "master") return logout();
+  data = liveDataBeforeSimulation;
+  liveDataBeforeSimulation = null;
+  simulatorMode = false;
+  simulatorPickerOpen = false;
+  simulatorRole = null;
+  adminData = null;
+  adminMode = false;
+  analyticsMode = false;
+  selectedCode = data.clients?.[0]?.call_center_code || null;
+  startTimer();
+  render();
 }
 
 // ---- forgot password (emailed 6-digit code; fits the file-based dashboard, no hosted page) ----
@@ -594,6 +751,11 @@ async function refreshSession() {
 
 async function load(fromLogin, retried) {
   if (!session) return loginScreen();
+  if (simulatorMode) {
+    data = simulatorPayload(simulatorRole);
+    render();
+    return;
+  }
   if (fromLogin) app.innerHTML = `<div id="loading">${t("loading")}</div>`;
   let res;
   try {
@@ -617,6 +779,11 @@ async function load(fromLogin, retried) {
   // The master account (the owner) defaults to English; everyone else stays Arabic.
   // A manual language toggle is stored in localStorage and always wins over this default.
   if (data.role === "master" && !localStorage.getItem("shareek_lang")) lang = "en";
+  if (fromLogin && data.role === "ceo") {
+    analyticsMode = true;
+    analyticsTab = "employees";
+    analyticsData = analyticsForCurrentRole();
+  }
   // default selected tab = worst client
   if (!selectedCode || !data.clients.some(c => c.call_center_code === selectedCode)) {
     const sorted = sortedClients();
@@ -638,11 +805,18 @@ function render() {
   applyLang();
   const isMaster = data.role === "master";
   const isAdmin = data.role === "admin";
+  const isCeo = data.role === "ceo";
   const canManage = isMaster || isAdmin;   // can open the Accounts panel + see every client
+  const canAnalytics = isMaster || isCeo;
   const clients = data.clients || [];
   const sorted = sortedClients();
 
-  const header = `<header class="top"><h1>${LOGO}Shareek</h1>
+  const simulationBanner = simulatorMode ? `<div class="sim-banner">
+    <span>${t("simulatorBanner")} · ${simulatorRole === "master" ? t("roleMaster") : simulatorRole === "admin" ? t("roleAdmin") : simulatorRole === "ceo" ? t("roleCeo") : t("roleSupervisor")}</span>
+    <button onclick="showSimulator()">${t("simulatorSwitch")}</button>
+    <button onclick="exitSimulator()">${t("simulatorExit")}</button>
+  </div>` : "";
+  const header = `${simulationBanner}<header class="top"><h1>${LOGO}Shareek</h1>
     <span class="sub">${t("title")} · ${t("subtitle")} ${fmtTime(data.generated_at)}</span>
     <div class="langtoggle">
       <button class="${lang === "ar" ? "active" : ""}" onclick="setLang('ar')">العربية</button>
@@ -651,10 +825,11 @@ function render() {
     ${!adminMode && !analyticsMode ? `<button onclick="load()">${t("refresh")}</button>` : ""}
     ${canManage && adminMode
       ? `<button class="ghost" onclick="closeAccounts()">${t("backToHealth")}</button>`
-      : isMaster && analyticsMode
+      : canAnalytics && analyticsMode
       ? `<button class="ghost" onclick="closeAnalytics()">${t("backToHealth")}</button>`
       : `${canManage ? `<button class="ghost" onclick="openAccounts()">${t("accounts")}</button>` : ""}
-         ${isMaster ? `<button class="ghost" onclick="openAnalytics()">${t("analytics")}</button>` : ""}`}
+         ${canAnalytics ? `<button class="ghost" onclick="openAnalytics()">${t("analytics")}</button>` : ""}
+         ${isMaster && !simulatorMode ? `<button class="ghost" onclick="showSimulator()">${t("simulatorMenu")}</button>` : ""}`}
     <button class="ghost" onclick="logout()">${t("logout")}</button>
   </header>`;
 
@@ -663,7 +838,7 @@ function render() {
     return;
   }
 
-  if (analyticsMode && isMaster) {
+  if (analyticsMode && canAnalytics) {
     app.innerHTML = header + `<div class="wrap">${analyticsPanel()}</div>`;
     return;
   }
@@ -724,10 +899,10 @@ function clientSection(c) {
 
 // ---- controls ----------------------------------------------------------------
 function selectClient(cc) { selectedCode = cc; render(); }
-function logout() { session = null; data = null; selectedCode = null; stopTimer(); loginScreen(); }
-function startTimer() { stopTimer(); timer = setInterval(() => { if (session) load(); }, REFRESH_MS); }
+function logout() { simulatorMode = false; simulatorPickerOpen = false; simulatorRole = null; liveDataBeforeSimulation = null; session = null; data = null; selectedCode = null; stopTimer(); loginScreen(); }
+function startTimer() { stopTimer(); if (!simulatorMode) timer = setInterval(() => { if (session) load(); }, REFRESH_MS); }
 function stopTimer() { if (timer) { clearInterval(timer); timer = null; } }
-function route() { if (session && data) render(); else loginScreen(); }
+function route() { if (simulatorPickerOpen) showSimulator(); else if (session && data) render(); else loginScreen(); }
 
 // ---- Accounts panel (master only) --------------------------------------------
 function adminPanel() {
@@ -738,9 +913,10 @@ function adminPanel() {
   const clientName = code => (clients.find(c => c.call_center_code === code)?.display_name) || code || "—";
   const rows = users.map(u => {
     const em = esc(u.email || "");
-    const isPriv = u.role === "master" || u.role === "admin";   // privileged rows only a master may touch
-    const roleLabel = u.role === "master" ? t("roleMaster") : u.role === "admin" ? t("roleAdmin") : t("roleSupervisor");
-    const scope = isPriv ? `<span class="sub">${t("allClientsTag")}</span>` : esc(clientName(u.call_center_code));
+    const isPriv = u.role === "master" || u.role === "admin" || u.role === "ceo";   // privileged rows only a master may touch
+    const roleLabel = u.role === "master" ? t("roleMaster") : u.role === "admin" ? t("roleAdmin") : u.role === "ceo" ? t("roleCeo") : t("roleSupervisor");
+    const scope = u.role === "master" || u.role === "admin"
+      ? `<span class="sub">${t("allClientsTag")}</span>` : esc(clientName(u.call_center_code));
     const status = u.active ? `<span class="clean">${t("statusActive")}</span>` : `<span class="att">${t("statusDisabled")}</span>`;
     const canEditRow = isMasterCaller || !isPriv;   // an admin may only manage supervisor logins
     const acts = canEditRow ? `
@@ -771,7 +947,7 @@ function adminPanel() {
         ${isMasterCaller ? `<button class="danger" onclick="deleteClient('${cc}')">${t("deleteBtn")}</button>` : ""}
       </td></tr>`;
   }).join("");
-  return `
+  return `<div class="${simulatorMode ? "sim-readonly" : ""}">
     <h2>${t("accountsTitle")}</h2>
     ${adminMsg ? `<p class="note" style="color:var(--gGreen);font-weight:600">${esc(adminMsg)}</p>` : ""}
     <div class="scroll"><table>
@@ -783,6 +959,7 @@ function adminPanel() {
       <input id="nu_pw" type="text" autocomplete="off" placeholder="${t("phPassword")}">
       ${isMasterCaller ? `<select id="nu_role" onchange="onRoleChange()">
         <option value="supervisor">${t("roleSupervisor")}</option>
+        <option value="ceo">${t("roleCeo")}</option>
         <option value="admin">${t("roleAdmin")}</option>
       </select>` : ""}
       <select id="nu_client"><option value="">${t("pickClient")}</option>${opts}</select>
@@ -797,10 +974,11 @@ function adminPanel() {
       <input id="nc_code" type="text" autocomplete="off" placeholder="${t("phClientCode")}">
       <input id="nc_name" type="text" autocomplete="off" placeholder="${t("phClientName")}">
       <button onclick="addClient()">${t("addClientBtn")}</button>
-    </div>`;
+    </div></div>`;
 }
 
 async function adminCall(payload, retried) {
+  if (simulatorMode) return { ok:false, j:{ error:t("simulatorReadOnly") } };
   let res;
   try {
     res = await fetch(ADMIN_API, {
@@ -814,7 +992,12 @@ async function adminCall(payload, retried) {
   return { ok: res.ok, status: res.status, j };
 }
 
-async function openAccounts() { adminMode = true; adminData = null; adminMsg = ""; render();
+async function openAccounts() {
+  if (simulatorMode) {
+    adminMode = true; adminData = simulatorAdminPayload(); adminMsg = t("simulatorReadOnly"); render();
+    return;
+  }
+  adminMode = true; adminData = null; adminMsg = ""; render();
   const { ok, j } = await adminCall({ action: "list" });
   if (ok) adminData = j; else adminMsg = j.error || t("serverError");
   render();
@@ -822,7 +1005,7 @@ async function openAccounts() { adminMode = true; adminData = null; adminMsg = "
 function closeAccounts() { adminMode = false; adminMsg = ""; render(); }
 async function refreshAdmin() { const { ok, j } = await adminCall({ action: "list" }); if (ok) adminData = j; render(); }
 
-// Hide the client picker when the master is creating an admin (admins aren't tied to one client).
+// Hide the client picker only for admins; CEOs and supervisors are tied to one client.
 function onRoleChange() {
   const role = document.getElementById("nu_role")?.value || "supervisor";
   const sel = document.getElementById("nu_client");
@@ -889,7 +1072,7 @@ async function deleteClient(code) {
   adminMsg = ok ? t("doneDeleted") : (j.error || t("serverError")); await refreshAdmin();
 }
 
-// ---- CEO Analytics dashboard (master only) --------------------------------------------
+// ---- Analytics dashboard (master + company-scoped CEO) -------------------------------
 // PLACEHOLDER DATA. Real numbers arrive once the AI pipeline emits the extra fields
 // (criteria_scores, churn_risk, complaint, competitor_mentions, product_requests, marketing_source…).
 // When that's ready, replace MOCK_ANALYTICS below with a fetch to ANALYTICS_API (see openAnalytics).
@@ -953,6 +1136,22 @@ const MOCK_ANALYTICS = {
     { name:"Basra Center",   calls:144, quality:74, conversion:29, happy:61, missed:12 },
   ],
 };
+
+// Until the aggregate analytics payload is connected, keep CEO sample data visibly scoped to
+// the one company returned by the authenticated health API. No other company names appear.
+function analyticsForCurrentRole() {
+  if (data?.role !== "ceo") return MOCK_ANALYTICS;
+  const scoped = JSON.parse(JSON.stringify(MOCK_ANALYTICS));
+  const company = data.clients?.[0]?.display_name || data.clients?.[0]?.call_center_code || t("clients");
+  scoped.employees = scoped.employees.slice(0, 2).map(e => ({ ...e, client:company }));
+  scoped.risk.churn = scoped.risk.churn.slice(0, 2).map(c => ({ ...c, client:company }));
+  scoped.clients = scoped.clients.slice(0, 1).map(c => ({ ...c, name:company }));
+  scoped.action_points = scoped.action_points.map(a => ({
+    ...a,
+    ctx:a.ctx.replace(/Karrada Center|Mansour Center|Basra Center/g, company),
+  }));
+  return scoped;
+}
 
 const scoreColor = s => s >= 80 ? "#1d7a4d" : s >= 60 ? "#b8860b" : s >= 40 ? "#d35400" : "#c0392b";
 const scoreBadge = v => `<span class="score" style="background:${scoreColor(v)}">${v}</span>`;
@@ -1139,7 +1338,7 @@ function renderClients() {
 
 function analyticsPanel() {
   if (!analyticsData) return `<div id="loading">${t("loading")}</div>`;
-  const tabs = [["overview","tabOverview"],["actions","tabActions"],["employees","tabEmployees"],
+  const tabs = [["employees","tabEmployees"],["overview","tabOverview"],["actions","tabActions"],
     ["risk","tabRisk"],["voice","tabVoice"],["trends","tabTrends"],["clients","tabClients"]];
   const nav = `<div class="tabs">${tabs.map(([id, k]) =>
     `<button class="${analyticsTab === id ? "active" : ""}" onclick="setAnalyticsTab('${id}')">${t(k)}</button>`).join("")}</div>`;
@@ -1160,7 +1359,7 @@ function setAnalyticsTab(id) { analyticsTab = id; render(); }
 // SEAM: for now the CEO dashboard runs on placeholder data. Once the pipeline emits the
 // analytics fields, swap the line below for a fetch to ANALYTICS_API (same auth pattern as
 // adminCall) and drop the returned payload into analyticsData.
-function openAnalytics() { analyticsMode = true; analyticsTab = "overview"; analyticsData = MOCK_ANALYTICS; analyticsMsg = ""; render(); }
+function openAnalytics() { analyticsMode = true; analyticsTab = "employees"; analyticsData = analyticsForCurrentRole(); analyticsMsg = ""; render(); }
 function closeAnalytics() { analyticsMode = false; analyticsMsg = ""; render(); }
 
 applyLang();
