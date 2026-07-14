@@ -836,7 +836,7 @@ function render() {
       <button class="${lang === "en" ? "active" : ""}" onclick="setLang('en')">English</button>
     </div>
     ${!adminMode && !analyticsMode && !employeesMode ? `<button onclick="load()">${t("refresh")}</button>` : ""}
-    ${isSupervisor && employeesMode
+    ${(isSupervisor || canManage) && employeesMode
       ? `<button class="ghost" onclick="closeEmployees()">${t("backToHealth")}</button>`
       : canManage && adminMode
       ? `<button class="ghost" onclick="closeAccounts()">${t("backToHealth")}</button>`
@@ -844,7 +844,7 @@ function render() {
       ? `<button class="ghost" onclick="closeAnalytics()">${t("backToHealth")}</button>`
       : `${canManage ? `<button class="ghost" onclick="openAccounts()">${t("accounts")}</button>` : ""}
          ${canAnalytics ? `<button class="ghost" onclick="openAnalytics()">${t("analytics")}</button>` : ""}
-         ${isSupervisor ? `<button class="ghost" onclick="openEmployees()">${t("employeesMenu")}</button>` : ""}
+         ${(isSupervisor || canManage) ? `<button class="ghost" onclick="openEmployees()">${t("employeesMenu")}</button>` : ""}
          ${isMaster && !simulatorMode ? `<button class="ghost" onclick="showSimulator()">${t("simulatorMenu")}</button>` : ""}`}
     <button class="ghost" onclick="logout()">${t("logout")}</button>
   </header>`;
@@ -859,7 +859,7 @@ function render() {
     return;
   }
 
-  if (employeesMode && isSupervisor) {
+  if (employeesMode && (isSupervisor || canManage)) {
     app.innerHTML = header + `<div class="wrap">${employeesPanel()}</div>`;
     return;
   }
@@ -927,6 +927,10 @@ function route() { if (simulatorPickerOpen) showSimulator(); else if (session &&
 
 function employeesPanel() {
   if (!employeesData) return `<div id="loading">${t("loading")}</div>`;
+  const canChooseCenter = data.role === "master" || data.role === "admin";
+  const centerPicker = canChooseCenter ? `<select id="emp_center" onchange="changeEmployeesCenter(this.value)">
+    ${(data.clients || []).map(c => `<option value="${esc(c.call_center_code)}" ${c.call_center_code === selectedCode ? "selected" : ""}>${esc(c.display_name || c.call_center_code)}</option>`).join("")}
+  </select>` : "";
   const rows = (employeesData.employees || []).map(e => `<tr class="${e.active ? "" : "muted"}">
     <td><b>${esc(e.display_name)}</b></td>
     <td>${e.active ? `<span class="ok">${t("statusActive")}</span>` : `<span class="bad">${t("statusDisabled")}</span>`}</td>
@@ -935,6 +939,7 @@ function employeesPanel() {
       <button onclick="setEmployeeActive('${esc(e.id)}',${e.active ? "false" : "true"})">${e.active ? t("deactivateEmployee") : t("activateEmployee")}</button></td>
   </tr>`).join("");
   return `<div class="${simulatorMode ? "sim-readonly" : ""}"><h2>${t("employeesTitle")}</h2>
+    ${centerPicker}
     <p class="note">${t("employeesNote")}</p>${employeesMsg ? `<p class="ok">${esc(employeesMsg)}</p>` : ""}
     <div class="scroll">${rows ? `<table><tr><th>${t("employeeName")}</th><th>${t("colActive")}</th><th></th></tr>${rows}</table>` : `<div class="empty">${t("noEmployees")}</div>`}</div>
     <h2>${t("addEmployee")}</h2><div class="addform"><input id="emp_name" placeholder="${t("employeeName")}">
@@ -944,7 +949,8 @@ function employeesPanel() {
 async function employeeCall(payload, retried) {
   if (simulatorMode) return { ok:false, j:{ error:t("simulatorReadOnly") } };
   try {
-    const res = await fetch(EMPLOYEES_API, { method:"POST", headers:{ apikey:ANON, Authorization:"Bearer " + session.access_token, "content-type":"application/json" }, body:JSON.stringify(payload) });
+    const scopedPayload = (data.role === "master" || data.role === "admin") ? {...payload, call_center_code:selectedCode} : payload;
+    const res = await fetch(EMPLOYEES_API, { method:"POST", headers:{ apikey:ANON, Authorization:"Bearer " + session.access_token, "content-type":"application/json" }, body:JSON.stringify(scopedPayload) });
     if (res.status === 401 && !retried && await refreshSession()) return employeeCall(payload, true);
     return { ok:res.ok, j:await res.json().catch(() => ({})) };
   } catch { return { ok:false, j:{ error:t("noConn") } }; }
@@ -955,6 +961,7 @@ async function openEmployees() {
   employeesData = null; render(); const {ok,j} = await employeeCall({action:"list"}); employeesData = ok ? j : {employees:[]}; employeesMsg = ok ? "" : (j.error || t("serverError")); render();
 }
 function closeEmployees() { employeesMode = false; employeesMsg = ""; render(); }
+function changeEmployeesCenter(center) { selectedCode = center; employeesData = null; openEmployees(); }
 async function refreshEmployees(msg) { const {ok,j} = await employeeCall({action:"list"}); if (ok) employeesData = j; employeesMsg = msg || (ok ? "" : j.error); render(); }
 async function addEmployee() { const display_name=(document.getElementById("emp_name")?.value||"").trim(), pin=document.getElementById("emp_pin")?.value||""; if (!display_name || !/^\d{4}$/.test(pin)) return; const {ok,j}=await employeeCall({action:"add",display_name,pin}); await refreshEmployees(ok?t("employeeAdded"):(j.error||t("serverError"))); }
 async function renameEmployee(id) { const name=(employeesData.employees||[]).find(e=>e.id===id)?.display_name||""; const display_name=prompt(t("newEmployeeName")+" "+name+":",name); if (!display_name) return; const {ok,j}=await employeeCall({action:"rename",employee_id:id,display_name}); await refreshEmployees(ok?t("doneSaved"):(j.error||t("serverError"))); }
