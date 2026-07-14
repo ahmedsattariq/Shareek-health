@@ -207,12 +207,12 @@ const T = {
     title:"Dashboard", subtitle:"Baghdad time · updated", refresh:"Refresh", logout:"Log out",
     loginTitle:"Dashboard", loginHint:"Sign in to continue",
     emailLabel:"Email", passwordLabel:"Password", loginBtn:"Sign in",
-    simulatorTitle:"Account simulator", simulatorHint:"Choose a role to see exactly what that account can access. No login is created and all data is fictional.",
+    simulatorTitle:"Account simulator", simulatorHint:"Choose a role to see its real dashboard layout using the live data currently loaded. Changes are disabled.",
     simulatorMaster:"Master", simulatorMasterDesc:"Owner view across every client, including account management and CEO analytics.",
     simulatorCeo:"CEO", simulatorCeoDesc:"Company view that opens on employee ratings, with Analytics and phone health for one company.",
     simulatorAdmin:"Admin", simulatorAdminDesc:"Field-team view across every client, with safe supervisor and client management.",
     simulatorSupervisor:"Supervisor", simulatorSupervisorDesc:"Client view limited to one call center and its phones.",
-    simulatorOpen:"Open preview", simulatorBack:"← Back to my dashboard", simulatorBanner:"Simulation · fictional data · no real account",
+    simulatorOpen:"Open preview", simulatorBack:"← Back to my dashboard", simulatorBanner:"Simulation · live data · changes disabled",
     simulatorMenu:"Simulator", simulatorSwitch:"Switch role", simulatorExit:"Exit simulation", simulatorReadOnly:"Simulation only — no real changes were made.",
     loading:"Loading…", noConn:"No connection — check internet and try again.", serverError:"Server error",
     badCreds:"Wrong email or password.", noAccess:"This account has no dashboard access.",
@@ -284,12 +284,12 @@ const T = {
     title:"لوحة المعلومات", subtitle:"توقيت بغداد · آخر تحديث", refresh:"تحديث", logout:"خروج",
     loginTitle:"لوحة المعلومات", loginHint:"سجّل الدخول للمتابعة",
     emailLabel:"البريد الإلكتروني", passwordLabel:"كلمة المرور", loginBtn:"دخول",
-    simulatorTitle:"محاكي الحسابات", simulatorHint:"اختر نوع الحساب لترى بالضبط ما يمكنه الوصول إليه. لن يتم إنشاء حساب وكل البيانات تجريبية.",
+    simulatorTitle:"محاكي الحسابات", simulatorHint:"اختر نوع الحساب لرؤية واجهته الفعلية باستخدام البيانات الحقيقية المحمّلة الآن. التغييرات معطّلة.",
     simulatorMaster:"المدير", simulatorMasterDesc:"عرض المالك لكل المراكز، ويشمل إدارة الحسابات وتحليلات المدير التنفيذي.",
     simulatorCeo:"المدير التنفيذي", simulatorCeoDesc:"عرض الشركة الذي يبدأ بتقييمات الموظفين، مع التحليلات وصحة الأجهزة لشركة واحدة.",
     simulatorAdmin:"المسؤول", simulatorAdminDesc:"عرض فريق التجهيز لكل المراكز، مع إدارة آمنة للمشرفين والمراكز.",
     simulatorSupervisor:"المشرف", simulatorSupervisorDesc:"عرض محدود لمركز اتصال واحد وأجهزته فقط.",
-    simulatorOpen:"فتح المعاينة", simulatorBack:"← رجوع إلى لوحتي", simulatorBanner:"وضع المحاكاة · بيانات تجريبية · لا يوجد حساب حقيقي",
+    simulatorOpen:"فتح المعاينة", simulatorBack:"← رجوع إلى لوحتي", simulatorBanner:"وضع المحاكاة · بيانات حقيقية · التغييرات معطّلة",
     simulatorMenu:"المحاكي", simulatorSwitch:"تغيير نوع الحساب", simulatorExit:"إنهاء المحاكاة", simulatorReadOnly:"هذه محاكاة فقط — لم يتم إجراء أي تغيير حقيقي.",
     loading:"جاري التحميل…", noConn:"لا يوجد اتصال — تحقق من الإنترنت وحاول مرة أخرى.", serverError:"خطأ في الخادم",
     badCreds:"بريد إلكتروني أو كلمة مرور غير صحيحة.", noAccess:"هذا الحساب لا يملك صلاحية الدخول للوحة.",
@@ -373,7 +373,6 @@ function setLang(l) {
   applyLang();
   if (simulatorMode && simulatorRole) {
     data = simulatorPayload(simulatorRole);
-    if (adminMode) adminData = simulatorAdminPayload();
   }
   route();
 }
@@ -425,55 +424,21 @@ let analyticsTab = "employees"; // employee ratings are the analytics landing vi
 let employeesMode = false;
 let employeesData = null;
 let employeesMsg = "";
-let simulatorMode = false;  // true only for local, fictional account previews
+let simulatorMode = false;  // true while previewing a role with the master's live dashboard data
 let simulatorPickerOpen = false;
 let simulatorRole = null;
 let liveDataBeforeSimulation = null; // the authenticated master's live view, restored on exit
 
-// Fictional data used by the account simulator. It never leaves this page and never touches Supabase.
+// The simulator changes only the role and, for single-center roles, the visible center. It always
+// starts from the master's most recently loaded live dashboard payload — never demo data.
 function simulatorPayload(role) {
-  const stamp = minutesAgo => new Date(Date.now() - minutesAgo * 60000).toISOString();
-  const phone = (id, agent, label, status, battery, storage, seen, recorded, extra = {}) => ({
-    install_id:id, agent_name:agent, label, roster_status:extra.roster_status || "expected", status,
-    battery_level:battery, battery_charging:!!extra.charging, storage_free_mb:storage,
-    reported_at:stamp(seen), last_recording_at:recorded == null ? null : stamp(recorded),
-    device_model:extra.device || "Samsung A15", app_version:"1.4.0",
-    low_battery:battery < 15 && !extra.charging, low_storage:storage < 300,
-  });
-  const clients = [
-    { call_center_code:"DEMO-KAR", display_name:lang === "ar" ? "مركز الكرادة" : "Karrada Center", phones:[
-      phone("demo-kar-1", lang === "ar" ? "زينب كريم" : "Zainab Kareem", lang === "ar" ? "الاستقبال" : "Front desk", "healthy", 82, 6800, 2, 18, { charging:true }),
-      phone("demo-kar-2", lang === "ar" ? "أحمد علي" : "Ahmed Ali", lang === "ar" ? "المبيعات ١" : "Sales 1", "not_recording", 46, 3100, 4, 185),
-      phone("demo-kar-3", lang === "ar" ? "سارة جاسم" : "Sara Jasim", lang === "ar" ? "المبيعات ٢" : "Sales 2", "offline", 12, 920, 68, 93),
-    ]},
-    { call_center_code:"DEMO-MAN", display_name:lang === "ar" ? "مركز المنصور" : "Mansour Center", phones:[
-      phone("demo-man-1", lang === "ar" ? "عمر حسن" : "Omar Hassan", lang === "ar" ? "الدعم" : "Support", "healthy", 67, 4200, 3, 11, { device:"Redmi Note 13" }),
-      phone("demo-man-2", lang === "ar" ? "مريم عباس" : "Maryam Abbas", lang === "ar" ? "المتابعة" : "Follow-up", "dark", 29, 740, 1560, 1620, { device:"Samsung A24" }),
-    ]},
-    { call_center_code:"DEMO-BAS", display_name:lang === "ar" ? "مركز البصرة" : "Basra Center", phones:[
-      phone("demo-bas-1", lang === "ar" ? "علي مهدي" : "Ali Mahdi", lang === "ar" ? "هاتف الفرع" : "Branch phone", "healthy", 91, 8100, 1, 7, { charging:true, device:"Samsung A34" }),
-      phone("demo-bas-2", lang === "ar" ? "نور حسين" : "Noor Hussein", lang === "ar" ? "هاتف احتياطي" : "Spare phone", "paused", 54, 5500, 12, 2880, { roster_status:"paused", device:"Samsung A13" }),
-    ]},
-  ];
-  return { role, generated_at:new Date().toISOString(), clients:["ceo", "supervisor"].includes(role) ? [clients[0]] : clients };
-}
-
-function simulatorAdminPayload() {
-  return {
-    users:[
-      { email:"owner@demo.shareek", role:"master", call_center_code:null, active:true },
-      { email:"field@demo.shareek", role:"admin", call_center_code:null, active:true },
-      { email:"ceo@demo.shareek", role:"ceo", call_center_code:"DEMO-KAR", active:true },
-      { email:"karrada@demo.shareek", role:"supervisor", call_center_code:"DEMO-KAR", active:true },
-      { email:"mansour@demo.shareek", role:"supervisor", call_center_code:"DEMO-MAN", active:true },
-      { email:"basra@demo.shareek", role:"supervisor", call_center_code:"DEMO-BAS", active:false },
-    ],
-    clients:[
-      { call_center_code:"DEMO-KAR", display_name:lang === "ar" ? "مركز الكرادة" : "Karrada Center", phone_count:3, active:true },
-      { call_center_code:"DEMO-MAN", display_name:lang === "ar" ? "مركز المنصور" : "Mansour Center", phone_count:2, active:true },
-      { call_center_code:"DEMO-BAS", display_name:lang === "ar" ? "مركز البصرة" : "Basra Center", phone_count:2, active:true },
-    ],
-  };
+  const preview = JSON.parse(JSON.stringify(liveDataBeforeSimulation || data || {}));
+  preview.role = role;
+  if (["ceo", "supervisor"].includes(role)) {
+    const center = preview.clients?.find(c => c.call_center_code === selectedCode) || preview.clients?.[0];
+    preview.clients = center ? [center] : [];
+  }
+  return preview;
 }
 
 // ---- status helpers ----------------------------------------------------------
@@ -609,13 +574,11 @@ function startSimulation(role) {
   simulatorMode = true;
   simulatorPickerOpen = false;
   simulatorRole = role;
-  session = { simulated:true };
   data = simulatorPayload(role);
   adminData = null;
   adminMode = false;
-  analyticsMode = role === "ceo";
-  analyticsTab = role === "ceo" ? "employees" : "overview";
-  analyticsData = role === "ceo" ? analyticsForCurrentRole() : null;
+  analyticsMode = false;
+  analyticsData = null;
   selectedCode = data.clients[0]?.call_center_code || null;
   render();
 }
@@ -763,11 +726,7 @@ async function refreshSession() {
 
 async function load(fromLogin, retried) {
   if (!session) return loginScreen();
-  if (simulatorMode) {
-    data = simulatorPayload(simulatorRole);
-    render();
-    return;
-  }
+  if (simulatorMode) { data = simulatorPayload(simulatorRole); render(); return; }
   if (fromLogin) app.innerHTML = `<div id="loading">${t("loading")}</div>`;
   let res;
   try {
@@ -947,9 +906,9 @@ function employeesPanel() {
 }
 
 async function employeeCall(payload, retried) {
-  if (simulatorMode) return { ok:false, j:{ error:t("simulatorReadOnly") } };
+  if (simulatorMode && payload.action !== "list") return { ok:false, j:{ error:t("simulatorReadOnly") } };
   try {
-    const scopedPayload = (data.role === "master" || data.role === "admin") ? {...payload, call_center_code:selectedCode} : payload;
+    const scopedPayload = (simulatorMode || data.role === "master" || data.role === "admin") ? {...payload, call_center_code:selectedCode} : payload;
     const res = await fetch(EMPLOYEES_API, { method:"POST", headers:{ apikey:ANON, Authorization:"Bearer " + session.access_token, "content-type":"application/json" }, body:JSON.stringify(scopedPayload) });
     if (res.status === 401 && !retried && await refreshSession()) return employeeCall(payload, true);
     return { ok:res.ok, j:await res.json().catch(() => ({})) };
@@ -957,7 +916,6 @@ async function employeeCall(payload, retried) {
 }
 async function openEmployees() {
   employeesMode = true; employeesMsg = "";
-  if (simulatorMode) { employeesData = { employees:[{id:"demo-1",display_name:lang === "ar" ? "أحمد علي" : "Ahmed Ali",active:true},{id:"demo-2",display_name:lang === "ar" ? "زينب كريم" : "Zainab Kareem",active:true}] }; render(); return; }
   employeesData = null; render(); const {ok,j} = await employeeCall({action:"list"}); employeesData = ok ? j : {employees:[]}; employeesMsg = ok ? "" : (j.error || t("serverError")); render();
 }
 function closeEmployees() { employeesMode = false; employeesMsg = ""; render(); }
@@ -1042,7 +1000,7 @@ function adminPanel() {
 }
 
 async function adminCall(payload, retried) {
-  if (simulatorMode) return { ok:false, j:{ error:t("simulatorReadOnly") } };
+  if (simulatorMode && payload.action !== "list") return { ok:false, j:{ error:t("simulatorReadOnly") } };
   let res;
   try {
     res = await fetch(ADMIN_API, {
@@ -1057,10 +1015,6 @@ async function adminCall(payload, retried) {
 }
 
 async function openAccounts() {
-  if (simulatorMode) {
-    adminMode = true; adminData = simulatorAdminPayload(); adminMsg = t("simulatorReadOnly"); render();
-    return;
-  }
   adminMode = true; adminData = null; adminMsg = ""; render();
   const { ok, j } = await adminCall({ action: "list" });
   if (ok) adminData = j; else adminMsg = j.error || t("serverError");
