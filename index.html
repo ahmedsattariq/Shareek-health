@@ -419,6 +419,9 @@ let timer = null;
 let adminMode = false;  // Accounts view (master + admin/field-tech)
 let adminData = null;   // { users, clients }
 let adminMsg = "";      // last action feedback
+let whatsappSetupMode = false; // Master-only WhatsApp Inbox onboarding
+let whatsappSetupData = null;  // { clients, channels, users }
+let whatsappSetupMsg = "";
 let analyticsMode = false;  // Analytics view: master across all companies, CEO for one company
 let analyticsData = null;   // CEO analytics payload (mock for now)
 let analyticsMsg = "";      // last error/feedback message
@@ -552,6 +555,7 @@ function showSimulator() {
   simulatorPickerOpen = true;
   data = liveDataBeforeSimulation;
   adminMode = false;
+  whatsappSetupMode = false;
   analyticsMode = false;
   applyLang();
   const roleCard = (role, icon, title, desc) => `<button class="sim-role" onclick="startSimulation('${role}')">
@@ -580,6 +584,7 @@ function startSimulation(role) {
   data = simulatorPayload(role);
   adminData = null;
   adminMode = false;
+  whatsappSetupMode = false;
   analyticsMode = false;
   analyticsData = null;
   selectedCode = data.clients[0]?.call_center_code || null;
@@ -802,12 +807,15 @@ function render() {
       ? `<button class="ghost" onclick="closeEmployees()">${t("backToHealth")}</button>`
       : canManage && adminMode
       ? `<button class="ghost" onclick="closeAccounts()">${t("backToHealth")}</button>`
+      : isMaster && whatsappSetupMode
+      ? `<button class="ghost" onclick="closeWhatsAppSetup()">${t("backToHealth")}</button>`
       : canAnalytics && analyticsMode
       ? `<button class="ghost" onclick="closeAnalytics()">${t("backToHealth")}</button>
          <button onclick="exportAnalyticsPdf()">${t("exportPdf")}</button>`
       : `${canManage ? `<button class="ghost" onclick="openAccounts()">${t("accounts")}</button>` : ""}
          ${canAnalytics ? `<button class="ghost" onclick="openAnalytics()">${t("analytics")}</button>` : ""}
          ${(isSupervisor || canManage) ? `<button class="ghost" onclick="openEmployees()">${t("employeesMenu")}</button>` : ""}
+         ${isMaster && !simulatorMode ? `<button class="ghost" onclick="openWhatsAppSetup()">⚙️ WhatsApp Setup</button>` : ""}
          ${isMaster && !simulatorMode ? `<button class="ghost" onclick="openWhatsAppInbox()">📩 WhatsApp Inbox</button>` : ""}
          ${isMaster && !simulatorMode ? `<button class="ghost" onclick="openLeads()">🎯 Leads</button>` : ""}
          ${isMaster && !simulatorMode ? `<button class="ghost" onclick="showSimulator()">${t("simulatorMenu")}</button>` : ""}`}
@@ -816,6 +824,11 @@ function render() {
 
   if (adminMode && canManage) {
     app.innerHTML = header + `<div class="wrap">${adminPanel()}</div>`;
+    return;
+  }
+
+  if (whatsappSetupMode && isMaster) {
+    app.innerHTML = header + `<div class="wrap">${whatsAppSetupPanel()}</div>`;
     return;
   }
 
@@ -893,7 +906,7 @@ function openLeads() {
   const desktopDashboard = /Shareek-(Health-)?Dashboard\.html$/i.test(decodeURIComponent(location.pathname));
   window.open(desktopDashboard ? "Shareek-Leads.html" : "leads.html", "_blank", "noopener");
 }
-function logout() { simulatorMode = false; simulatorPickerOpen = false; simulatorRole = null; liveDataBeforeSimulation = null; employeesMode = false; employeesData = null; session = null; data = null; selectedCode = null; stopTimer(); loginScreen(); }
+function logout() { simulatorMode = false; simulatorPickerOpen = false; simulatorRole = null; liveDataBeforeSimulation = null; employeesMode = false; employeesData = null; whatsappSetupMode = false; whatsappSetupData = null; session = null; data = null; selectedCode = null; stopTimer(); loginScreen(); }
 function startTimer() { stopTimer(); if (!simulatorMode) timer = setInterval(() => { if (session) load(); }, REFRESH_MS); }
 function stopTimer() { if (timer) { clearInterval(timer); timer = null; } }
 function route() { if (simulatorPickerOpen) showSimulator(); else if (session && data) render(); else loginScreen(); }
@@ -1036,6 +1049,85 @@ async function openAccounts() {
 }
 function closeAccounts() { adminMode = false; adminMsg = ""; render(); }
 async function refreshAdmin() { const { ok, j } = await adminCall({ action: "list" }); if (ok) adminData = j; render(); }
+
+// ---- WhatsApp Inbox setup (master only) -------------------------------------
+// This uses the same authenticated master session as the dashboard. WhatsApp-only
+// clients and users remain separate from recording-dashboard clients and logins.
+function whatsAppSetupPanel() {
+  if (!whatsappSetupData) return `<div id="loading">${t("loading")}</div>`;
+  const clients = whatsappSetupData.clients || [];
+  const channels = whatsappSetupData.channels || [];
+  const users = whatsappSetupData.users || [];
+  const options = clients.filter(c => c.active).map(c =>
+    `<option value="${esc(c.call_center_code)}">${esc(c.display_name || c.call_center_code)} (${esc(c.call_center_code)})</option>`).join("");
+  return `<div>
+    <h2>WhatsApp Inbox setup</h2>
+    <p class="note">Create WhatsApp-only clients, connect their number, and give their team access. These accounts do not appear in the call-recording dashboard.</p>
+    ${whatsappSetupMsg ? `<p class="note" style="color:var(--gGreen);font-weight:600">${esc(whatsappSetupMsg)}</p>` : ""}
+    <h2>1. Add WhatsApp-only client</h2>
+    <div class="addform"><input id="wa_client_code" placeholder="Client code, e.g. BAGHDAD_SHOP">
+      <input id="wa_client_name" placeholder="Client business name"><button onclick="addWhatsAppClient()">Add Inbox client</button></div>
+    <div class="scroll"><table><tr><th>Client</th><th>Code</th><th>Status</th></tr>
+      ${clients.map(c => `<tr><td>${esc(c.display_name || "—")}</td><td>${esc(c.call_center_code)}</td><td>${c.active ? "Active" : "Inactive"}</td></tr>`).join("") || `<tr><td colspan="3" class="sub">No Inbox clients yet.</td></tr>`}</table></div>
+    <h2>2. Connect WhatsApp number</h2>
+    <p class="note">Use the Meta Phone Number ID and WhatsApp Business Account ID — never an access token.</p>
+    <div class="addform"><select id="wa_channel_client"><option value="">Choose Inbox client</option>${options}</select>
+      <input id="wa_phone_id" placeholder="Meta Phone Number ID"><input id="wa_waba_id" placeholder="Meta WABA ID">
+      <input id="wa_display_number" placeholder="Public WhatsApp number, e.g. +964…"><input id="wa_display_name" placeholder="WhatsApp display name">
+      <input id="wa_sla" type="number" value="10" min="1" max="1440" placeholder="First response minutes"><button onclick="addWhatsAppChannel()">Connect number</button></div>
+    <div class="scroll"><table><tr><th>Client</th><th>Number</th><th>Name</th><th>SLA</th></tr>
+      ${channels.map(c => `<tr><td>${esc(c.call_center_code)}</td><td>${esc(c.display_phone_number || c.phone_number_id)}</td><td>${esc(c.display_name || "—")}</td><td>${esc(c.first_response_sla_minutes)} min</td></tr>`).join("") || `<tr><td colspan="4" class="sub">No numbers connected yet.</td></tr>`}</table></div>
+    <h2>3. Add Inbox user</h2>
+    <div class="addform"><select id="wa_user_client"><option value="">Choose Inbox client</option>${options}</select>
+      <input id="wa_user_email" type="email" placeholder="User email"><input id="wa_user_password" type="text" placeholder="Temporary password (6+ characters)">
+      <select id="wa_user_role"><option value="agent">Agent</option><option value="manager">Manager</option></select><button onclick="addWhatsAppUser()">Add Inbox user</button></div>
+    <div class="scroll"><table><tr><th>Email</th><th>Client</th><th>Role</th><th>Status</th></tr>
+      ${users.map(u => `<tr><td>${esc(u.email)}</td><td>${esc(u.call_center_code)}</td><td>${esc(u.role)}</td><td>${u.active ? "Active" : "Inactive"}</td></tr>`).join("") || `<tr><td colspan="4" class="sub">No Inbox users yet.</td></tr>`}</table></div>
+  </div>`;
+}
+async function openWhatsAppSetup() {
+  whatsappSetupMode = true; whatsappSetupData = null; whatsappSetupMsg = ""; render();
+  const { ok, j } = await adminCall({ action: "list_whatsapp" });
+  if (ok) whatsappSetupData = j; else whatsappSetupMsg = j.error || t("serverError");
+  render();
+}
+function closeWhatsAppSetup() { whatsappSetupMode = false; whatsappSetupMsg = ""; render(); }
+async function refreshWhatsAppSetup(message) {
+  const { ok, j } = await adminCall({ action: "list_whatsapp" });
+  if (ok) whatsappSetupData = j;
+  whatsappSetupMsg = message || (ok ? "" : (j.error || t("serverError")));
+  render();
+}
+async function addWhatsAppClient() {
+  const call_center_code = (document.getElementById("wa_client_code")?.value || "").trim();
+  const display_name = (document.getElementById("wa_client_name")?.value || "").trim();
+  if (!call_center_code) return;
+  whatsappSetupMsg = t("saving"); render();
+  const { ok, j } = await adminCall({ action:"add_whatsapp_client", call_center_code, display_name });
+  await refreshWhatsAppSetup(ok ? "Inbox client added." : (j.error || t("serverError")));
+}
+async function addWhatsAppChannel() {
+  const call_center_code = document.getElementById("wa_channel_client")?.value || "";
+  const phone_number_id = (document.getElementById("wa_phone_id")?.value || "").trim();
+  const waba_id = (document.getElementById("wa_waba_id")?.value || "").trim();
+  const display_phone_number = (document.getElementById("wa_display_number")?.value || "").trim();
+  const display_name = (document.getElementById("wa_display_name")?.value || "").trim();
+  const first_response_sla_minutes = Number(document.getElementById("wa_sla")?.value || 10);
+  if (!call_center_code || !phone_number_id || !waba_id || !display_phone_number) return;
+  whatsappSetupMsg = t("saving"); render();
+  const { ok, j } = await adminCall({ action:"add_whatsapp_channel", call_center_code, phone_number_id, waba_id, display_phone_number, display_name, first_response_sla_minutes });
+  await refreshWhatsAppSetup(ok ? "WhatsApp number connected." : (j.error || t("serverError")));
+}
+async function addWhatsAppUser() {
+  const call_center_code = document.getElementById("wa_user_client")?.value || "";
+  const email = (document.getElementById("wa_user_email")?.value || "").trim();
+  const password = document.getElementById("wa_user_password")?.value || "";
+  const role = document.getElementById("wa_user_role")?.value || "agent";
+  if (!call_center_code || !email || password.length < 6) return;
+  whatsappSetupMsg = t("saving"); render();
+  const { ok, j } = await adminCall({ action:"add_whatsapp_user", call_center_code, email, password, role });
+  await refreshWhatsAppSetup(ok ? "Inbox user added." : (j.error || t("serverError")));
+}
 
 // Hide the client picker only for admins; CEOs and supervisors are tied to one client.
 function onRoleChange() {
