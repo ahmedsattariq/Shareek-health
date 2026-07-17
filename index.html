@@ -246,6 +246,7 @@ const T = {
     renamePrompt:"Display name for", inactiveTag:"inactive", doneRenamed:"Renamed.",
     addClientTitle:"Add a client", phClientCode:"call center code (exact, as sent by the phone)", phClientName:"display name (optional)",
     addClientBtn:"Add client", confirmDeleteClient:"Delete this client? This only works if it has no phones or logins left.",
+    removePhone:"Remove phone", confirmRemovePhone:"Remove this phone? It will disappear from the dashboard and this install will no longer be allowed to upload recordings.",
     confirmForceDeleteClient:"This client still has phones in its roster. Delete it anyway and remove those phones too? (Already-uploaded recordings are not affected — if the phones are still active they'll just reappear on their next check-in.)",
     doneAdded:"Client added.", doneDeleted:"Client deleted.",
     hours:"h", minutes:"m", days:"d",
@@ -323,6 +324,7 @@ const T = {
     renamePrompt:"اسم العرض لـ", inactiveTag:"موقوف", doneRenamed:"تمت إعادة التسمية.",
     addClientTitle:"إضافة مركز", phClientCode:"رمز مركز الاتصال (بالضبط كما يرسله الجهاز)", phClientName:"اسم العرض (اختياري)",
     addClientBtn:"إضافة المركز", confirmDeleteClient:"حذف هذا المركز؟ يعمل هذا فقط إذا لم تعد فيه أجهزة أو حسابات دخول.",
+    removePhone:"حذف الجهاز", confirmRemovePhone:"حذف هذا الجهاز؟ سيختفي من اللوحة ولن يُسمح لهذا الجهاز برفع التسجيلات بعد الآن.",
     confirmForceDeleteClient:"لا يزال في هذا المركز أجهزة مسجّلة. هل تريد حذفه مع حذف هذه الأجهزة أيضاً؟ (التسجيلات المرفوعة مسبقاً لن تتأثر — وإذا كانت الأجهزة لا تزال نشطة فستظهر من جديد عند أول اتصال قادم.)",
     doneAdded:"تمت إضافة المركز.", doneDeleted:"تم حذف المركز.",
     hours:"س", minutes:"د", days:"ي",
@@ -503,11 +505,12 @@ function phoneTable(client) {
       <td>${p.last_recording_at ? fmtTime(p.last_recording_at) : t("never")}</td>
       <td>${p.reported_at ? fmtTime(p.reported_at) : "—"}</td>
       <td><span class="sub">${esc(p.device_model || "")}${p.app_version ? " · v" + esc(p.app_version) : ""}</span></td>
+      ${data && (data.role === "master" || data.role === "admin") ? `<td class="acts"><button class="danger" onclick="retirePhone('${esc(p.install_id)}')">${t("removePhone")}</button></td>` : ""}
     </tr>`;
   }).join("");
   return `<div class="scroll"><table>
     <tr><th>${t("colPhone")}</th><th>${t("colStatus")}</th><th>${t("colBattery")}</th><th>${t("colStorage")}</th>
-        <th>${t("colLastRec")}</th><th>${t("colLastCheckin")}</th><th>${t("colDevice")}</th></tr>
+        <th>${t("colLastRec")}</th><th>${t("colLastCheckin")}</th><th>${t("colDevice")}</th>${data && (data.role === "master" || data.role === "admin") ? "<th></th>" : ""}</tr>
     ${rows}</table></div>`;
 }
 
@@ -747,9 +750,9 @@ async function load(fromLogin, retried) {
   if (res.status === 403) { session = null; stopTimer(); return loginScreen(t("noAccess")); }
   if (!res.ok) { if (fromLogin) loginScreen(t("serverError") + " (" + res.status + ")"); return; }
   data = await res.json();
-  // The master account (the owner) defaults to English; everyone else stays Arabic.
-  // A manual language toggle is stored in localStorage and always wins over this default.
-  if (data.role === "master" && !localStorage.getItem("shareek_lang")) lang = "en";
+  // The master account always lands in English after signing in. They can still use
+  // the visible language buttons for the current session; other roles remain Arabic-first.
+  if (fromLogin && data.role === "master") lang = "en";
   if (fromLogin && data.role === "ceo") {
     analyticsMode = true;
     analyticsTab = "employees";
@@ -804,6 +807,7 @@ function render() {
       : `${canManage ? `<button class="ghost" onclick="openAccounts()">${t("accounts")}</button>` : ""}
          ${canAnalytics ? `<button class="ghost" onclick="openAnalytics()">${t("analytics")}</button>` : ""}
          ${(isSupervisor || canManage) ? `<button class="ghost" onclick="openEmployees()">${t("employeesMenu")}</button>` : ""}
+         ${isMaster && !simulatorMode ? `<button class="ghost" onclick="openWhatsAppInbox()">📩 WhatsApp Inbox</button>` : ""}
          ${isMaster && !simulatorMode ? `<button class="ghost" onclick="showSimulator()">${t("simulatorMenu")}</button>` : ""}`}
     <button class="ghost" onclick="logout()">${t("logout")}</button>
   </header>`;
@@ -879,6 +883,10 @@ function clientSection(c) {
 
 // ---- controls ----------------------------------------------------------------
 function selectClient(cc) { selectedCode = cc; render(); }
+function openWhatsAppInbox() {
+  const desktopDashboard = /Shareek-(Health-)?Dashboard\.html$/i.test(decodeURIComponent(location.pathname));
+  window.open(desktopDashboard ? "Shareek-WhatsApp-Inbox.html" : "whatsapp-inbox.html", "_blank", "noopener");
+}
 function logout() { simulatorMode = false; simulatorPickerOpen = false; simulatorRole = null; liveDataBeforeSimulation = null; employeesMode = false; employeesData = null; session = null; data = null; selectedCode = null; stopTimer(); loginScreen(); }
 function startTimer() { stopTimer(); if (!simulatorMode) timer = setInterval(() => { if (session) load(); }, REFRESH_MS); }
 function stopTimer() { if (timer) { clearInterval(timer); timer = null; } }
@@ -1088,6 +1096,12 @@ async function deleteClient(code) {
     ({ ok, j } = await adminCall({ action: "delete_client", call_center_code: code, force: true }));
   }
   adminMsg = ok ? t("doneDeleted") : (j.error || t("serverError")); await refreshAdmin();
+}
+async function retirePhone(installId) {
+  if (!confirm(t("confirmRemovePhone"))) return;
+  const { ok, j } = await adminCall({ action: "retire_phone", install_id: installId });
+  if (!ok) { alert(j.error || t("serverError")); return; }
+  await load();
 }
 
 // ---- Analytics dashboard (master + company-scoped CEO) -------------------------------
