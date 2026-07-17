@@ -250,7 +250,7 @@ const T = {
     confirmForceDeleteClient:"This client still has phones in its roster. Delete it anyway and remove those phones too? (Already-uploaded recordings are not affected — if the phones are still active they'll just reappear on their next check-in.)",
     doneAdded:"Client added.", doneDeleted:"Client deleted.",
     hours:"h", minutes:"m", days:"d",
-    analytics:"Analytics", placeholderNote:"Sample data — real numbers appear once the AI pipeline is connected.",
+    analytics:"Analytics", exportPdf:"Export PDF", pdfReport:"Analytics report", pdfBlocked:"PDF export is only available to accounts with Analytics access.", placeholderNote:"Sample data — real numbers appear once the AI pipeline is connected.",
     // sub-tab names
     tabOverview:"Overview", tabActions:"Action points", tabEmployees:"Employees", tabRisk:"Risk & churn",
     tabVoice:"Customer voice", tabTrends:"Trends", tabClients:"Clients",
@@ -328,7 +328,7 @@ const T = {
     confirmForceDeleteClient:"لا يزال في هذا المركز أجهزة مسجّلة. هل تريد حذفه مع حذف هذه الأجهزة أيضاً؟ (التسجيلات المرفوعة مسبقاً لن تتأثر — وإذا كانت الأجهزة لا تزال نشطة فستظهر من جديد عند أول اتصال قادم.)",
     doneAdded:"تمت إضافة المركز.", doneDeleted:"تم حذف المركز.",
     hours:"س", minutes:"د", days:"ي",
-    analytics:"التحليلات", placeholderNote:"بيانات تجريبية — الأرقام الحقيقية تظهر بعد ربط نظام تحليل المكالمات.",
+    analytics:"التحليلات", exportPdf:"تصدير PDF", pdfReport:"تقرير التحليلات", pdfBlocked:"تصدير PDF متاح فقط للحسابات التي تملك صلاحية التحليلات.", placeholderNote:"بيانات تجريبية — الأرقام الحقيقية تظهر بعد ربط نظام تحليل المكالمات.",
     // sub-tab names
     tabOverview:"نظرة عامة", tabActions:"نقاط العمل", tabEmployees:"الموظفون", tabRisk:"المخاطر والتسرّب",
     tabVoice:"صوت العميل", tabTrends:"الاتجاهات", tabClients:"المراكز",
@@ -803,7 +803,8 @@ function render() {
       : canManage && adminMode
       ? `<button class="ghost" onclick="closeAccounts()">${t("backToHealth")}</button>`
       : canAnalytics && analyticsMode
-      ? `<button class="ghost" onclick="closeAnalytics()">${t("backToHealth")}</button>`
+      ? `<button class="ghost" onclick="closeAnalytics()">${t("backToHealth")}</button>
+         <button onclick="exportAnalyticsPdf()">${t("exportPdf")}</button>`
       : `${canManage ? `<button class="ghost" onclick="openAccounts()">${t("accounts")}</button>` : ""}
          ${canAnalytics ? `<button class="ghost" onclick="openAnalytics()">${t("analytics")}</button>` : ""}
          ${(isSupervisor || canManage) ? `<button class="ghost" onclick="openEmployees()">${t("employeesMenu")}</button>` : ""}
@@ -1384,20 +1385,51 @@ function analyticsPanel() {
     ["risk","tabRisk"],["voice","tabVoice"],["trends","tabTrends"],["clients","tabClients"]];
   const nav = `<div class="tabs">${tabs.map(([id, k]) =>
     `<button class="${analyticsTab === id ? "active" : ""}" onclick="setAnalyticsTab('${id}')">${t(k)}</button>`).join("")}</div>`;
-  let body;
-  switch (analyticsTab) {
-    case "actions":   body = renderActions();   break;
-    case "employees": body = renderEmployees(); break;
-    case "risk":      body = renderRisk();      break;
-    case "voice":     body = renderVoice();     break;
-    case "trends":    body = renderTrends();    break;
-    case "clients":   body = renderClients();   break;
-    default:          body = renderOverview();
-  }
+  const body = analyticsTabContent();
   return `<p class="a-note">${t("placeholderNote")}</p>${nav}${body}`;
 }
 
+function analyticsTabContent() {
+  switch (analyticsTab) {
+    case "actions":   return renderActions();
+    case "employees": return renderEmployees();
+    case "risk":      return renderRisk();
+    case "voice":     return renderVoice();
+    case "trends":    return renderTrends();
+    case "clients":   return renderClients();
+    default:            return renderOverview();
+  }
+}
+
 function setAnalyticsTab(id) { analyticsTab = id; render(); }
+function exportAnalyticsPdf() {
+  const canExport = data && (data.role === "master" || data.role === "ceo");
+  if (!canExport || !analyticsData) { alert(t("pdfBlocked")); return; }
+
+  // Build a print-only document from the in-memory analytics already authorized for this user.
+  // This keeps CEO exports scoped to their own call center, just like the on-screen dashboard.
+  const originalTab = analyticsTab;
+  const sections = [
+    ["employees", "tabEmployees"], ["overview", "tabOverview"], ["actions", "tabActions"],
+    ["risk", "tabRisk"], ["voice", "tabVoice"], ["trends", "tabTrends"], ["clients", "tabClients"],
+  ].map(([id, key]) => {
+    analyticsTab = id;
+    return `<section class="pdf-section"><h2>${esc(t(key))}</h2>${analyticsTabContent()}</section>`;
+  }).join("");
+  analyticsTab = originalTab;
+
+  const report = window.open("", "_blank");
+  if (!report) { alert("Please allow pop-ups to export the PDF."); return; }
+  const styles = document.querySelector("style").textContent;
+  const printedAt = new Intl.DateTimeFormat(lang === "ar" ? "ar-IQ" : "en-GB", {
+    dateStyle:"medium", timeStyle:"short", timeZone:"Asia/Baghdad",
+  }).format(new Date());
+  report.document.write(`<!doctype html><html lang="${lang}" dir="${lang === "ar" ? "rtl" : "ltr"}"><head>
+    <meta charset="utf-8"><title>${esc(t("pdfReport"))}</title><style>${styles}
+    body{background:#fff}.pdf-report{max-width:1100px;margin:0 auto;padding:24px}.pdf-header{border-bottom:2px solid #0D1B2A;margin-bottom:22px;padding-bottom:12px}.pdf-header h1{margin:0;font-size:25px}.pdf-header p{margin:5px 0 0;color:#667;font-size:12px}.pdf-section{break-inside:avoid;margin:0 0 30px}.pdf-section>h2{font-size:19px;margin:0 0 12px}.pdf-section .section{break-inside:avoid}@media print{.pdf-report{padding:0}.pdf-section{break-before:auto}.chart-box,.emp,.act,.kpi{break-inside:avoid}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+    </style></head><body><main class="pdf-report"><header class="pdf-header"><h1>Shareek · ${esc(t("pdfReport"))}</h1><p>${esc(printedAt)}</p></header><p class="a-note">${t("placeholderNote")}</p>${sections}</main><script>window.onload=()=>window.print();<\/script></body></html>`);
+  report.document.close();
+}
 // SEAM: for now the CEO dashboard runs on placeholder data. Once the pipeline emits the
 // analytics fields, swap the line below for a fetch to ANALYTICS_API (same auth pattern as
 // adminCall) and drop the returned payload into analyticsData.
