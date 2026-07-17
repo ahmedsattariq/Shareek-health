@@ -808,6 +808,7 @@ function render() {
          ${canAnalytics ? `<button class="ghost" onclick="openAnalytics()">${t("analytics")}</button>` : ""}
          ${(isSupervisor || canManage) ? `<button class="ghost" onclick="openEmployees()">${t("employeesMenu")}</button>` : ""}
          ${isMaster && !simulatorMode ? `<button class="ghost" onclick="openWhatsAppInbox()">📩 WhatsApp Inbox</button>` : ""}
+         ${isMaster && !simulatorMode ? `<button class="ghost" onclick="openLeads()">🎯 Leads</button>` : ""}
          ${isMaster && !simulatorMode ? `<button class="ghost" onclick="showSimulator()">${t("simulatorMenu")}</button>` : ""}`}
     <button class="ghost" onclick="logout()">${t("logout")}</button>
   </header>`;
@@ -886,6 +887,10 @@ function selectClient(cc) { selectedCode = cc; render(); }
 function openWhatsAppInbox() {
   const desktopDashboard = /Shareek-(Health-)?Dashboard\.html$/i.test(decodeURIComponent(location.pathname));
   window.open(desktopDashboard ? "Shareek-WhatsApp-Inbox.html" : "whatsapp-inbox.html", "_blank", "noopener");
+}
+function openLeads() {
+  const desktopDashboard = /Shareek-(Health-)?Dashboard\.html$/i.test(decodeURIComponent(location.pathname));
+  window.open(desktopDashboard ? "Shareek-Leads.html" : "leads.html", "_blank", "noopener");
 }
 function logout() { simulatorMode = false; simulatorPickerOpen = false; simulatorRole = null; liveDataBeforeSimulation = null; employeesMode = false; employeesData = null; session = null; data = null; selectedCode = null; stopTimer(); loginScreen(); }
 function startTimer() { stopTimer(); if (!simulatorMode) timer = setInterval(() => { if (session) load(); }, REFRESH_MS); }
