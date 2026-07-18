@@ -1010,6 +1010,7 @@ function adminPanel() {
         <option value="supervisor">${t("roleSupervisor")}</option>
         <option value="ceo">${t("roleCeo")}</option>
         ${isMasterCaller ? `<option value="admin">${t("roleAdmin")}</option>` : ""}
+        ${isMasterCaller ? `<option value="master">${t("roleMaster")}</option>` : ""}
       </select>
       <select id="nu_client"><option value="">${t("pickClient")}</option>${opts}</select>
       <button onclick="addUser()">${t("addBtn")}</button>
@@ -1129,11 +1130,11 @@ async function addWhatsAppUser() {
   await refreshWhatsAppSetup(ok ? "Inbox user added." : (j.error || t("serverError")));
 }
 
-// Hide the client picker only for admins; CEOs and supervisors are tied to one client.
+// Masters and admins see every client; CEOs and supervisors are tied to one client.
 function onRoleChange() {
   const role = document.getElementById("nu_role")?.value || "supervisor";
   const sel = document.getElementById("nu_client");
-  if (sel) sel.style.display = role === "admin" ? "none" : "";
+  if (sel) sel.style.display = role === "admin" || role === "master" ? "none" : "";
 }
 async function addUser() {
   const email = (document.getElementById("nu_email")?.value || "").trim();
