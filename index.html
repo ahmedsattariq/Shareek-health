@@ -959,6 +959,7 @@ function adminPanel() {
   const isMasterCaller = data.role === "master";   // admins see the panel but with limited powers
   const clients = adminData.clients || [];
   const users = adminData.users || [];
+  const aiConnections = adminData.ai_connections || [];
   const clientName = code => (clients.find(c => c.call_center_code === code)?.display_name) || code || "—";
   const rows = users.map(u => {
     const em = esc(u.email || "");
@@ -996,6 +997,12 @@ function adminPanel() {
         ${isMasterCaller ? `<button class="danger" onclick="deleteClient('${cc}')">${t("deleteBtn")}</button>` : ""}
       </td></tr>`;
   }).join("");
+  const aiStatusByClient = new Map(aiConnections.map(c => [c.call_center_code, c]));
+  const aiRows = clients.map(c => {
+    const connection = aiStatusByClient.get(c.call_center_code);
+    const status = connection?.active ? `<span class="clean">Connected</span>` : `<span class="sub">Not connected</span>`;
+    return `<tr><td>${esc(c.display_name || c.call_center_code)}</td><td><span class="sub">${esc(c.call_center_code)}</span></td><td>${status}</td></tr>`;
+  }).join("");
   return `<div class="${simulatorMode ? "sim-readonly" : ""}">
     <h2>${t("accountsTitle")}</h2>
     ${adminMsg ? `<p class="note" style="color:var(--gGreen);font-weight:600">${esc(adminMsg)}</p>` : ""}
@@ -1024,7 +1031,17 @@ function adminPanel() {
       <input id="nc_code" type="text" autocomplete="off" placeholder="${t("phClientCode")}">
       <input id="nc_name" type="text" autocomplete="off" placeholder="${t("phClientName")}">
       <button onclick="addClient()">${t("addClientBtn")}</button>
-    </div></div>`;
+    </div>
+    ${isMasterCaller ? `<h2>Client AI setup</h2>
+    <p class="note">Paste one client's OpenRouter key here. The key is encrypted and never shown again. Set that key's daily spending cap first in OpenRouter.</p>
+    <div class="addform">
+      <select id="ai_client"><option value="">Choose client</option>${opts}</select>
+      <input id="ai_openrouter_key" type="password" autocomplete="off" spellcheck="false" placeholder="OpenRouter API key">
+      <button onclick="saveOpenRouterKey()">Save client key</button>
+    </div>
+    <div class="scroll"><table><tr><th>Client</th><th>Code</th><th>AI key</th></tr>
+      ${aiRows || `<tr><td colspan="3" class="sub">No recording clients yet.</td></tr>`}</table></div>` : ""}
+    </div>`;
 }
 
 async function adminCall(payload, retried) {
@@ -1185,6 +1202,15 @@ async function addClient() {
   adminMsg = t("saving"); render();
   const { ok, j } = await adminCall({ action: "add_client", call_center_code: code, display_name: name });
   adminMsg = ok ? t("doneAdded") : (j.error || t("serverError")); await refreshAdmin();
+}
+async function saveOpenRouterKey() {
+  const call_center_code = document.getElementById("ai_client")?.value || "";
+  const api_key = (document.getElementById("ai_openrouter_key")?.value || "").trim();
+  if (!call_center_code || !api_key) return;
+  adminMsg = "Saving encrypted client key…"; render();
+  const { ok, j } = await adminCall({ action: "configure_openrouter_key", call_center_code, api_key });
+  adminMsg = ok ? "Client AI key saved. It will not be shown again." : (j.error || t("serverError"));
+  await refreshAdmin();
 }
 async function deleteClient(code) {
   if (!confirm(t("confirmDeleteClient") + " (" + code + ")")) return;
