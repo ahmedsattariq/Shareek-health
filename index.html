@@ -786,8 +786,11 @@ function render() {
   const isAdmin = data.role === "admin";
   const isCeo = data.role === "ceo";
   const isSupervisor = data.role === "supervisor";
+  const isInbox = data.role === "inbox";
   const canManage = isMaster || isAdmin;   // can open the Accounts panel + see every client
   const canAnalytics = isMaster || isCeo;
+  const canUseInbox = isMaster || isAdmin || isCeo || isSupervisor || isInbox;
+  const canUseLeads = isMaster || isAdmin || isCeo || isSupervisor;
   const clients = data.clients || [];
   const sorted = sortedClients();
 
@@ -816,8 +819,8 @@ function render() {
          ${canAnalytics ? `<button class="ghost" onclick="openAnalytics()">${t("analytics")}</button>` : ""}
          ${(isSupervisor || canManage) ? `<button class="ghost" onclick="openEmployees()">${t("employeesMenu")}</button>` : ""}
          ${isMaster && !simulatorMode ? `<button class="ghost" onclick="openWhatsAppSetup()">⚙️ WhatsApp Setup</button>` : ""}
-         ${isMaster && !simulatorMode ? `<button class="ghost" onclick="openWhatsAppInbox()">📩 WhatsApp Inbox</button>` : ""}
-         ${isMaster && !simulatorMode ? `<button class="ghost" onclick="openLeads()">🎯 Leads</button>` : ""}
+         ${canUseInbox && !simulatorMode ? `<button class="ghost" onclick="openWhatsAppInbox()">📩 WhatsApp Inbox</button>` : ""}
+         ${canUseLeads && !simulatorMode ? `<button class="ghost" onclick="openLeads()">🎯 Leads</button>` : ""}
          ${isMaster && !simulatorMode ? `<button class="ghost" onclick="showSimulator()">${t("simulatorMenu")}</button>` : ""}`}
     <button class="ghost" onclick="logout()">${t("logout")}</button>
   </header>`;
@@ -839,6 +842,11 @@ function render() {
 
   if (employeesMode && (isSupervisor || canManage)) {
     app.innerHTML = header + `<div class="wrap">${employeesPanel()}</div>`;
+    return;
+  }
+
+  if (isInbox) {
+    app.innerHTML = header + `<div class="wrap"><div class="empty">Open WhatsApp Inbox to manage your customer messages.</div></div>`;
     return;
   }
 
@@ -900,11 +908,23 @@ function clientSection(c) {
 function selectClient(cc) { selectedCode = cc; render(); }
 function openWhatsAppInbox() {
   const desktopDashboard = /Shareek-(Health-)?Dashboard\.html$/i.test(decodeURIComponent(location.pathname));
-  window.open(desktopDashboard ? "Shareek-WhatsApp-Inbox.html" : "whatsapp-inbox.html", "_blank", "noopener");
+  openAuthenticatedModule(desktopDashboard ? "Shareek-WhatsApp-Inbox.html" : "whatsapp-inbox.html");
 }
 function openLeads() {
   const desktopDashboard = /Shareek-(Health-)?Dashboard\.html$/i.test(decodeURIComponent(location.pathname));
-  window.open(desktopDashboard ? "Shareek-Leads.html" : "leads.html", "_blank", "noopener");
+  openAuthenticatedModule(desktopDashboard ? "Shareek-Leads.html" : "leads.html");
+}
+// The operational modules are separate files, so pass the already-authenticated
+// Supabase session in the URL fragment. Fragments never go to the server and the
+// destination removes it from its address bar immediately. This keeps one login
+// at the dashboard while each module still sends the same token to its API.
+function openAuthenticatedModule(path) {
+  if (!session?.access_token) return loginScreen();
+  const handoff = encodeURIComponent(JSON.stringify({
+    access_token: session.access_token,
+    refresh_token: session.refresh_token,
+  }));
+  window.open(`${path}#shareek_session=${handoff}`, "_blank", "noopener");
 }
 function logout() { simulatorMode = false; simulatorPickerOpen = false; simulatorRole = null; liveDataBeforeSimulation = null; employeesMode = false; employeesData = null; whatsappSetupMode = false; whatsappSetupData = null; session = null; data = null; selectedCode = null; stopTimer(); loginScreen(); }
 function startTimer() { stopTimer(); if (!simulatorMode) timer = setInterval(() => { if (session) load(); }, REFRESH_MS); }
