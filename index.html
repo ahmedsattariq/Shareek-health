@@ -182,6 +182,8 @@ td.acts button.danger { background:#c0392b; color:#fff; }
 .pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:600; background:var(--cream2); }
 .pill.sent-happy { background:#d9f2e4; color:#1d7a4d; } .pill.sent-neutral { background:var(--cream2); }
 .pill.sent-upset { background:#fbe0dd; color:#c0392b; }
+.recordings { margin-top:20px; }
+.recordings audio { width:190px; height:32px; }
 </style>
 </head>
 <body>
@@ -229,6 +231,7 @@ const T = {
     stHealthy:"Recording", stOffline:"Offline", stDark:"Went dark", stNotRec:"Not recording",
     stPaused:"Paused", stRetired:"Retired",
     never:"never", ago:"ago", lastSeen:"last seen", emptyPhones:"No phones in this client yet.",
+    recordingsTitle:"Recent recordings", recordingsNote:"New calls appear after upload. Audio links are private and refresh for one hour.", noRecordings:"No recordings yet.", colWhen:"When", colAgent:"Agent", colLength:"Length", colListen:"Listen",
     note:"<b>Green</b> = recording & healthy. <b>Red</b> = follow up: <i>Offline</i> (phone off / no internet), <i>Went dark</i> (no check-in for a day — likely off or app removed), <i>Not recording</i> (Shizuku off), low <i>battery</i> (&lt;15% unplugged) or nearly-full <i>storage</i> (&lt;300 MB). 🔌 = charging. Grey = paused.",
     accounts:"Accounts", backToHealth:"← Back to dashboard", accountsTitle:"Dashboard logins",
     employeesMenu:"Employees", employeesTitle:"Center employees", employeesNote:"Employees use their name and a 4-digit PIN to clock in on shared Shareek phones.",
@@ -307,6 +310,7 @@ const T = {
     stHealthy:"يسجّل", stOffline:"غير متصل", stDark:"انقطع", stNotRec:"لا يسجّل",
     stPaused:"موقوف", stRetired:"متقاعد",
     never:"أبداً", ago:"منذ", lastSeen:"آخر ظهور", emptyPhones:"لا توجد أجهزة في هذا المركز بعد.",
+    recordingsTitle:"التسجيلات الأخيرة", recordingsNote:"تظهر المكالمات الجديدة بعد رفعها. روابط الاستماع خاصة وتتجدد لمدة ساعة.", noRecordings:"لا توجد تسجيلات بعد.", colWhen:"الوقت", colAgent:"الموظف", colLength:"المدة", colListen:"استماع",
     note:"<b>أخضر</b> = يسجّل وسليم. <b>أحمر</b> = يحتاج متابعة: <i>غير متصل</i> (الجهاز مطفأ أو لا إنترنت)، <i>انقطع</i> (لا اتصال منذ يوم — غالباً مطفأ أو حُذف التطبيق)، <i>لا يسجّل</i> (Shizuku متوقف)، <i>بطارية</i> منخفضة (أقل من 15% وغير موصول) أو <i>تخزين</i> شبه ممتلئ (أقل من 300 ميغابايت). 🔌 = يشحن. رمادي = موقوف.",
     accounts:"الحسابات", backToHealth:"← رجوع للوحة", accountsTitle:"حسابات الدخول",
     employeesMenu:"الموظفون", employeesTitle:"موظفو المركز", employeesNote:"يستخدم الموظف اسمه ورمزاً من ٤ أرقام لتسجيل بداية دوامه على هواتف شريك المشتركة.",
@@ -901,7 +905,20 @@ function clientSection(c) {
   return `<h2>${esc(name)}${r.attention
     ? ` — <span class="att">${r.attention} ${t("needAttention")}</span>` : ""}</h2>
     <p class="note">${t("note")}</p>
-    ${phoneTable(c)}`;
+    ${phoneTable(c)}
+    ${recordingsTable(c.call_center_code)}`;
+}
+
+function recordingsTable(code) {
+  const recordings = (data.recordings || []).filter(r => r.call_center_code === code);
+  if (!recordings.length) return `<section class="recordings"><h2>${t("recordingsTitle")}</h2><div class="empty">${t("noRecordings")}</div></section>`;
+  const rows = recordings.map(r => `<tr>
+    <td>${fmtTime(r.started_at)}</td><td>${esc(r.agent_name || "—")}</td>
+    <td>${r.duration_seconds ? Math.round(r.duration_seconds) + "s" : "—"}</td>
+    <td>${r.audio_url ? `<audio controls preload="none" src="${esc(r.audio_url)}"></audio>` : "—"}</td>
+  </tr>`).join("");
+  return `<section class="recordings"><h2>${t("recordingsTitle")}</h2><p class="note">${t("recordingsNote")}</p>
+    <div class="table-wrap"><table><thead><tr><th>${t("colWhen")}</th><th>${t("colAgent")}</th><th>${t("colLength")}</th><th>${t("colListen")}</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
 }
 
 // ---- controls ----------------------------------------------------------------
