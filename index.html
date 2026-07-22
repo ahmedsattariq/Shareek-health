@@ -250,6 +250,7 @@ const T = {
     addClientTitle:"Add a client", phClientCode:"call center code (exact, as sent by the phone)", phClientName:"display name (optional)",
     addClientBtn:"Add client", confirmDeleteClient:"Delete this client? This only works if it has no phones or logins left.",
     removePhone:"Remove phone", confirmRemovePhone:"Remove this phone? It will disappear from the dashboard and this install will no longer be allowed to upload recordings.",
+    blockedPhones:"Blocked phones", blockedPhoneId:"Installation ID", blockedAt:"Blocked", restorePhone:"Restore", confirmRestorePhone:"Restore this phone? It will be allowed to check in and upload again.", doneRestored:"Phone restored.", noBlockedPhones:"No blocked phones.",
     confirmForceDeleteClient:"This client still has phones in its roster. Delete it anyway and remove those phones too? (Already-uploaded recordings are not affected — if the phones are still active they'll just reappear on their next check-in.)",
     doneAdded:"Client added.", doneDeleted:"Client deleted.",
     hours:"h", minutes:"m", days:"d",
@@ -329,6 +330,7 @@ const T = {
     addClientTitle:"إضافة مركز", phClientCode:"رمز مركز الاتصال (بالضبط كما يرسله الجهاز)", phClientName:"اسم العرض (اختياري)",
     addClientBtn:"إضافة المركز", confirmDeleteClient:"حذف هذا المركز؟ يعمل هذا فقط إذا لم تعد فيه أجهزة أو حسابات دخول.",
     removePhone:"حذف الجهاز", confirmRemovePhone:"حذف هذا الجهاز؟ سيختفي من اللوحة ولن يُسمح لهذا الجهاز برفع التسجيلات بعد الآن.",
+    blockedPhones:"الأجهزة المحظورة", blockedPhoneId:"معرّف التثبيت", blockedAt:"وقت الحظر", restorePhone:"استعادة", confirmRestorePhone:"استعادة هذا الجهاز؟ سيسمح له بالاتصال ورفع التسجيلات مرة أخرى.", doneRestored:"تمت استعادة الجهاز.", noBlockedPhones:"لا توجد أجهزة محظورة.",
     confirmForceDeleteClient:"لا يزال في هذا المركز أجهزة مسجّلة. هل تريد حذفه مع حذف هذه الأجهزة أيضاً؟ (التسجيلات المرفوعة مسبقاً لن تتأثر — وإذا كانت الأجهزة لا تزال نشطة فستظهر من جديد عند أول اتصال قادم.)",
     doneAdded:"تمت إضافة المركز.", doneDeleted:"تم حذف المركز.",
     hours:"س", minutes:"د", days:"ي",
@@ -997,6 +999,7 @@ function adminPanel() {
   const clients = adminData.clients || [];
   const users = adminData.users || [];
   const aiConnections = adminData.ai_connections || [];
+  const blockedPhones = adminData.blocked_phones || [];
   const clientName = code => (clients.find(c => c.call_center_code === code)?.display_name) || code || "—";
   const rows = users.map(u => {
     const em = esc(u.email || "");
@@ -1040,6 +1043,11 @@ function adminPanel() {
     const status = connection?.active ? `<span class="clean">Connected</span>` : `<span class="sub">Not connected</span>`;
     return `<tr><td>${esc(c.display_name || c.call_center_code)}</td><td><span class="sub">${esc(c.call_center_code)}</span></td><td>${status}</td></tr>`;
   }).join("");
+  const blockedPhoneRows = blockedPhones.map(p => `<tr>
+    <td><code>${esc(p.install_id)}</code></td>
+    <td>${p.blocked_at ? fmtTime(p.blocked_at) : "—"}</td>
+    <td class="acts"><button onclick="restorePhone('${esc(p.install_id)}')">${t("restorePhone")}</button></td>
+  </tr>`).join("");
   return `<div class="${simulatorMode ? "sim-readonly" : ""}">
     <h2>${t("accountsTitle")}</h2>
     ${adminMsg ? `<p class="note" style="color:var(--gGreen);font-weight:600">${esc(adminMsg)}</p>` : ""}
@@ -1069,6 +1077,11 @@ function adminPanel() {
       <input id="nc_name" type="text" autocomplete="off" placeholder="${t("phClientName")}">
       <button onclick="addClient()">${t("addClientBtn")}</button>
     </div>
+    <h2>${t("blockedPhones")}</h2>
+    <p class="note">${t("confirmRestorePhone")}</p>
+    <div class="scroll"><table>
+      <tr><th>${t("blockedPhoneId")}</th><th>${t("blockedAt")}</th><th></th></tr>
+      ${blockedPhoneRows || `<tr><td colspan="3" class="sub">${t("noBlockedPhones")}</td></tr>`}</table></div>
     ${isMasterCaller ? `<h2>Client AI setup</h2>
     <p class="note">Paste one client's OpenRouter key here. The key is encrypted and never shown again. Set that key's daily spending cap first in OpenRouter.</p>
     <div class="addform">
@@ -1263,6 +1276,14 @@ async function retirePhone(installId) {
   if (!confirm(t("confirmRemovePhone"))) return;
   const { ok, j } = await adminCall({ action: "retire_phone", install_id: installId });
   if (!ok) { alert(j.error || t("serverError")); return; }
+  await load();
+}
+async function restorePhone(installId) {
+  if (!confirm(t("confirmRestorePhone"))) return;
+  adminMsg = t("saving"); render();
+  const { ok, j } = await adminCall({ action: "restore_phone", install_id: installId });
+  adminMsg = ok ? t("doneRestored") : (j.error || t("serverError"));
+  await refreshAdmin();
   await load();
 }
 
