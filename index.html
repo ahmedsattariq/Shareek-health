@@ -808,6 +808,9 @@ function sortedClients() {
 }
 
 function render() {
+  // The owner works in English only. Keep this enforced even after opening a
+  // sub-page or returning from a role preview, rather than merely hiding buttons.
+  if (data?.role === "master") lang = "en";
   applyLang();
   const isMaster = data.role === "master";
   const isAdmin = data.role === "admin";
@@ -842,10 +845,10 @@ function render() {
   const moreMenu = moreItems.trim() ? `<details class="header-menu"><summary>${t("more")}</summary><div class="menu-popover">${moreItems}</div></details>` : "";
   const header = `${simulationBanner}<header class="top"><h1>${LOGO}Shareek</h1>
     <span class="sub">${t("title")} · ${t("subtitle")} ${fmtTime(data.generated_at)}</span>
-    <div class="langtoggle">
+    ${!isMaster ? `<div class="langtoggle">
       <button class="${lang === "ar" ? "active" : ""}" onclick="setLang('ar')">العربية</button>
       <button class="${lang === "en" ? "active" : ""}" onclick="setLang('en')">English</button>
-    </div>
+    </div>` : ""}
     ${!adminMode && !technicalSetupMode && !pipelineOpsMode && !analyticsMode && !employeesMode ? `<button onclick="load()">${t("refresh")}</button>` : ""}
     ${(isSupervisor || canManage) && employeesMode
       ? `<button class="ghost" onclick="closeEmployees()">${t("backToHealth")}</button>`
