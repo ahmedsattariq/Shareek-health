@@ -11,7 +11,7 @@
  * Bump CACHE_VERSION whenever you want to force every installed app to drop its
  * old cached shell.
  */
-const CACHE_VERSION = "shareek-health-v1";
+const CACHE_VERSION = "shareek-health-v2";
 const SHELL = [
   "./",
   "./index.html",
