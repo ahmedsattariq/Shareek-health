@@ -251,7 +251,7 @@ const T = {
     badResetCode:"Wrong or expired code.", pwTooShort:"Password must be at least 6 characters.",
     clients:"Clients", phonesWord:"phones", onlineWord:"recording", needAttention:"need attention",
     allGood:"all good", noClients:"No clients reporting yet.",
-    colPhone:"Phone / Agent", colStatus:"Status", colBattery:"Battery", colStorage:"Storage",
+    colPhone:"Phone", colEmployee:"Current employee", colStatus:"Status", colBattery:"Battery", colStorage:"Storage",
     colLastRec:"Last recording", colLastCheckin:"Last check-in", colDevice:"Device",
     stHealthy:"Recording", stOffline:"Offline", stDark:"Went dark", stNotRec:"Not recording",
     stPaused:"Paused", stRetired:"Retired",
@@ -331,7 +331,7 @@ const T = {
     badResetCode:"رمز خاطئ أو منتهي الصلاحية.", pwTooShort:"كلمة المرور ٦ أحرف على الأقل.",
     clients:"المراكز", phonesWord:"جهاز", onlineWord:"يسجّل", needAttention:"تحتاج متابعة",
     allGood:"سليم", noClients:"لا توجد مراكز تُبلّغ بعد.",
-    colPhone:"الجهاز / الوكيل", colStatus:"الحالة", colBattery:"البطارية", colStorage:"التخزين",
+    colPhone:"الجهاز", colEmployee:"الموظف الحالي", colStatus:"الحالة", colBattery:"البطارية", colStorage:"التخزين",
     colLastRec:"آخر تسجيل", colLastCheckin:"آخر اتصال", colDevice:"الجهاز",
     stHealthy:"يسجّل", stOffline:"غير متصل", stDark:"انقطع", stNotRec:"لا يسجّل",
     stPaused:"موقوف", stRetired:"متقاعد",
@@ -543,6 +543,7 @@ function phoneTable(client) {
     const subtitle = p.label && p.agent_name ? p.agent_name : "";
     return `<tr class="${p.status === "dark" ? "dark" : ""}${muted ? " muted" : ""}">
       <td>${esc(name)}${subtitle ? `<br><span class="sub">${esc(subtitle)}</span>` : ""}</td>
+      <td>${esc(p.current_employee_name || "—")}</td>
       <td>${dot(m.c)}${m.label}${darkNote}</td>
       ${batteryCell(p)}
       ${storageCell(p)}
@@ -553,7 +554,7 @@ function phoneTable(client) {
     </tr>`;
   }).join("");
   return `<div class="scroll"><table>
-    <tr><th>${t("colPhone")}</th><th>${t("colStatus")}</th><th>${t("colBattery")}</th><th>${t("colStorage")}</th>
+    <tr><th>${t("colPhone")}</th><th>${t("colEmployee")}</th><th>${t("colStatus")}</th><th>${t("colBattery")}</th><th>${t("colStorage")}</th>
         <th>${t("colLastRec")}</th><th>${t("colLastCheckin")}</th><th>${t("colDevice")}</th>${data && (data.role === "master" || data.role === "admin") ? "<th></th>" : ""}</tr>
     ${rows}</table></div>`;
 }
