@@ -233,9 +233,9 @@ const T = {
     never:"never", ago:"ago", lastSeen:"last seen", emptyPhones:"No phones in this client yet.",
     recordingsTitle:"Recent recordings", recordingsNote:"New calls appear after upload. Audio links are private and refresh for one hour.", noRecordings:"No recordings yet.", colWhen:"When", colAgent:"Agent", colLength:"Length", colListen:"Listen",
     note:"<b>Green</b> = recording & healthy. <b>Red</b> = follow up: <i>Offline</i> (phone off / no internet), <i>Went dark</i> (no check-in for a day — likely off or app removed), <i>Not recording</i> (Shizuku off), low <i>battery</i> (&lt;15% unplugged) or nearly-full <i>storage</i> (&lt;300 MB). 🔌 = charging. Grey = paused.",
-    accounts:"Accounts", backToHealth:"← Back to dashboard", accountsTitle:"Dashboard logins",
+    accounts:"Accounts", technicalSetup:"Technical setup", backToHealth:"← Back to dashboard", accountsTitle:"Dashboard logins",
     employeesMenu:"Employees", employeesTitle:"Center employees", employeesNote:"Employees use their name and a 4-digit PIN to clock in on shared Shareek phones.",
-    addEmployee:"Add employee", employeeName:"employee name", employeePin:"4-digit PIN", noEmployees:"No employees added yet.",
+    addEmployee:"Add employee", employeeName:"employee name", employeePin:"4-digit PIN", employeeClient:"Assign to client", noEmployees:"No employees added yet.",
     renameEmployee:"Rename", resetPin:"Reset PIN", deactivateEmployee:"Deactivate", activateEmployee:"Activate",
     newEmployeeName:"New name for", newEmployeePin:"New 4-digit PIN for", employeeAdded:"Employee added.",
     colEmail:"Email", colRole:"Role", colClient:"Client", colActive:"Status",
@@ -313,9 +313,9 @@ const T = {
     never:"أبداً", ago:"منذ", lastSeen:"آخر ظهور", emptyPhones:"لا توجد أجهزة في هذا المركز بعد.",
     recordingsTitle:"التسجيلات الأخيرة", recordingsNote:"تظهر المكالمات الجديدة بعد رفعها. روابط الاستماع خاصة وتتجدد لمدة ساعة.", noRecordings:"لا توجد تسجيلات بعد.", colWhen:"الوقت", colAgent:"الموظف", colLength:"المدة", colListen:"استماع",
     note:"<b>أخضر</b> = يسجّل وسليم. <b>أحمر</b> = يحتاج متابعة: <i>غير متصل</i> (الجهاز مطفأ أو لا إنترنت)، <i>انقطع</i> (لا اتصال منذ يوم — غالباً مطفأ أو حُذف التطبيق)، <i>لا يسجّل</i> (Shizuku متوقف)، <i>بطارية</i> منخفضة (أقل من 15% وغير موصول) أو <i>تخزين</i> شبه ممتلئ (أقل من 300 ميغابايت). 🔌 = يشحن. رمادي = موقوف.",
-    accounts:"الحسابات", backToHealth:"← رجوع للوحة", accountsTitle:"حسابات الدخول",
+    accounts:"الحسابات", technicalSetup:"الإعدادات التقنية", backToHealth:"← رجوع للوحة", accountsTitle:"حسابات الدخول",
     employeesMenu:"الموظفون", employeesTitle:"موظفو المركز", employeesNote:"يستخدم الموظف اسمه ورمزاً من ٤ أرقام لتسجيل بداية دوامه على هواتف شريك المشتركة.",
-    addEmployee:"إضافة موظف", employeeName:"اسم الموظف", employeePin:"رمز من ٤ أرقام", noEmployees:"لم تتم إضافة موظفين بعد.",
+    addEmployee:"إضافة موظف", employeeName:"اسم الموظف", employeePin:"رمز من ٤ أرقام", employeeClient:"تعيين للمركز", noEmployees:"لم تتم إضافة الموظفين بعد.",
     renameEmployee:"تغيير الاسم", resetPin:"إعادة تعيين الرمز", deactivateEmployee:"إيقاف", activateEmployee:"تفعيل",
     newEmployeeName:"الاسم الجديد لـ", newEmployeePin:"رمز جديد من ٤ أرقام لـ", employeeAdded:"تمت إضافة الموظف.",
     colEmail:"البريد", colRole:"الدور", colClient:"المركز", colActive:"الحالة",
@@ -425,6 +425,7 @@ let timer = null;
 let adminMode = false;  // Accounts view (master + admin/field-tech)
 let adminData = null;   // { users, clients }
 let adminMsg = "";      // last action feedback
+let technicalSetupMode = false; // Master-only API, AI, and pipeline configuration
 let whatsappSetupMode = false; // Master-only WhatsApp Inbox onboarding
 let whatsappSetupData = null;  // { clients, channels, users }
 let whatsappSetupMsg = "";
@@ -811,17 +812,20 @@ function render() {
       <button class="${lang === "ar" ? "active" : ""}" onclick="setLang('ar')">العربية</button>
       <button class="${lang === "en" ? "active" : ""}" onclick="setLang('en')">English</button>
     </div>
-    ${!adminMode && !analyticsMode && !employeesMode ? `<button onclick="load()">${t("refresh")}</button>` : ""}
+    ${!adminMode && !technicalSetupMode && !analyticsMode && !employeesMode ? `<button onclick="load()">${t("refresh")}</button>` : ""}
     ${(isSupervisor || canManage) && employeesMode
       ? `<button class="ghost" onclick="closeEmployees()">${t("backToHealth")}</button>`
       : canManage && adminMode
       ? `<button class="ghost" onclick="closeAccounts()">${t("backToHealth")}</button>`
+      : isMaster && technicalSetupMode
+      ? `<button class="ghost" onclick="closeTechnicalSetup()">${t("backToHealth")}</button>`
       : isMaster && whatsappSetupMode
       ? `<button class="ghost" onclick="closeWhatsAppSetup()">${t("backToHealth")}</button>`
       : canAnalytics && analyticsMode
       ? `<button class="ghost" onclick="closeAnalytics()">${t("backToHealth")}</button>
          <button onclick="exportAnalyticsPdf()">${t("exportPdf")}</button>`
       : `${canManage ? `<button class="ghost" onclick="openAccounts()">${t("accounts")}</button>` : ""}
+         ${isMaster && !simulatorMode ? `<button class="ghost" onclick="openTechnicalSetup()">⚙️ ${t("technicalSetup")}</button>` : ""}
          ${canAnalytics ? `<button class="ghost" onclick="openAnalytics()">${t("analytics")}</button>` : ""}
          ${(isSupervisor || canManage) ? `<button class="ghost" onclick="openEmployees()">${t("employeesMenu")}</button>` : ""}
          ${isMaster && !simulatorMode ? `<button class="ghost" onclick="openWhatsAppSetup()">⚙️ WhatsApp Setup</button>` : ""}
@@ -833,6 +837,11 @@ function render() {
 
   if (adminMode && canManage) {
     app.innerHTML = header + `<div class="wrap">${adminPanel()}</div>`;
+    return;
+  }
+
+  if (technicalSetupMode && isMaster) {
+    app.innerHTML = header + `<div class="wrap">${technicalSetupPanel()}</div>`;
     return;
   }
 
@@ -945,7 +954,7 @@ function openAuthenticatedModule(path) {
   }));
   window.open(`${path}#shareek_session=${handoff}`, "_blank", "noopener");
 }
-function logout() { simulatorMode = false; simulatorPickerOpen = false; simulatorRole = null; liveDataBeforeSimulation = null; employeesMode = false; employeesData = null; whatsappSetupMode = false; whatsappSetupData = null; session = null; data = null; selectedCode = null; stopTimer(); loginScreen(); }
+function logout() { simulatorMode = false; simulatorPickerOpen = false; simulatorRole = null; liveDataBeforeSimulation = null; employeesMode = false; employeesData = null; technicalSetupMode = false; whatsappSetupMode = false; whatsappSetupData = null; session = null; data = null; selectedCode = null; stopTimer(); loginScreen(); }
 function startTimer() { stopTimer(); if (!simulatorMode) timer = setInterval(() => { if (session) load(); }, REFRESH_MS); }
 function stopTimer() { if (timer) { clearInterval(timer); timer = null; } }
 function route() { if (simulatorPickerOpen) showSimulator(); else if (session && data) render(); else loginScreen(); }
@@ -953,8 +962,9 @@ function route() { if (simulatorPickerOpen) showSimulator(); else if (session &&
 function employeesPanel() {
   if (!employeesData) return `<div id="loading">${t("loading")}</div>`;
   const canChooseCenter = data.role === "master" || data.role === "admin";
+  const clientOptions = (data.clients || []).map(c => `<option value="${esc(c.call_center_code)}" ${c.call_center_code === selectedCode ? "selected" : ""}>${esc(c.display_name || c.call_center_code)}</option>`).join("");
   const centerPicker = canChooseCenter ? `<select id="emp_center" onchange="changeEmployeesCenter(this.value)">
-    ${(data.clients || []).map(c => `<option value="${esc(c.call_center_code)}" ${c.call_center_code === selectedCode ? "selected" : ""}>${esc(c.display_name || c.call_center_code)}</option>`).join("")}
+    ${clientOptions}
   </select>` : "";
   const rows = (employeesData.employees || []).map(e => `<tr class="${e.active ? "" : "muted"}">
     <td><b>${esc(e.display_name)}</b></td>
@@ -968,13 +978,15 @@ function employeesPanel() {
     <p class="note">${t("employeesNote")}</p>${employeesMsg ? `<p class="ok">${esc(employeesMsg)}</p>` : ""}
     <div class="scroll">${rows ? `<table><tr><th>${t("employeeName")}</th><th>${t("colActive")}</th><th></th></tr>${rows}</table>` : `<div class="empty">${t("noEmployees")}</div>`}</div>
     <h2>${t("addEmployee")}</h2><div class="addform"><input id="emp_name" placeholder="${t("employeeName")}">
-      <input id="emp_pin" inputmode="numeric" maxlength="4" placeholder="${t("employeePin")}"><button onclick="addEmployee()">${t("addEmployee")}</button></div></div>`;
+      <input id="emp_pin" inputmode="numeric" maxlength="4" placeholder="${t("employeePin")}">
+      ${canChooseCenter ? `<select id="emp_add_client" aria-label="${t("employeeClient")}"><option value="">${t("employeeClient")}</option>${clientOptions}</select>` : ""}
+      <button onclick="addEmployee()">${t("addEmployee")}</button></div></div>`;
 }
 
 async function employeeCall(payload, retried) {
   if (simulatorMode && payload.action !== "list") return { ok:false, j:{ error:t("simulatorReadOnly") } };
   try {
-    const scopedPayload = (simulatorMode || data.role === "master" || data.role === "admin") ? {...payload, call_center_code:selectedCode} : payload;
+    const scopedPayload = (simulatorMode || data.role === "master" || data.role === "admin") ? {...payload, call_center_code:payload.call_center_code || selectedCode} : payload;
     const res = await fetch(EMPLOYEES_API, { method:"POST", headers:{ apikey:ANON, Authorization:"Bearer " + session.access_token, "content-type":"application/json" }, body:JSON.stringify(scopedPayload) });
     if (res.status === 401 && !retried && await refreshSession()) return employeeCall(payload, true);
     return { ok:res.ok, j:await res.json().catch(() => ({})) };
@@ -987,7 +999,15 @@ async function openEmployees() {
 function closeEmployees() { employeesMode = false; employeesMsg = ""; render(); }
 function changeEmployeesCenter(center) { selectedCode = center; employeesData = null; openEmployees(); }
 async function refreshEmployees(msg) { const {ok,j} = await employeeCall({action:"list"}); if (ok) employeesData = j; employeesMsg = msg || (ok ? "" : j.error); render(); }
-async function addEmployee() { const display_name=(document.getElementById("emp_name")?.value||"").trim(), pin=document.getElementById("emp_pin")?.value||""; if (!display_name || !/^\d{4}$/.test(pin)) return; const {ok,j}=await employeeCall({action:"add",display_name,pin}); await refreshEmployees(ok?t("employeeAdded"):(j.error||t("serverError"))); }
+async function addEmployee() {
+  const display_name=(document.getElementById("emp_name")?.value||"").trim();
+  const pin=document.getElementById("emp_pin")?.value||"";
+  const call_center_code=document.getElementById("emp_add_client")?.value || selectedCode;
+  if (!display_name || !/^\d{4}$/.test(pin) || !call_center_code) return;
+  const {ok,j}=await employeeCall({action:"add",display_name,pin,call_center_code});
+  selectedCode = call_center_code;
+  await refreshEmployees(ok?t("employeeAdded"):(j.error||t("serverError")));
+}
 async function renameEmployee(id) { const name=(employeesData.employees||[]).find(e=>e.id===id)?.display_name||""; const display_name=prompt(t("newEmployeeName")+" "+name+":",name); if (!display_name) return; const {ok,j}=await employeeCall({action:"rename",employee_id:id,display_name}); await refreshEmployees(ok?t("doneSaved"):(j.error||t("serverError"))); }
 async function resetEmployeePin(id) { const name=(employeesData.employees||[]).find(e=>e.id===id)?.display_name||""; const pin=prompt(t("newEmployeePin")+" "+name+":"); if (!pin) return; const {ok,j}=await employeeCall({action:"set_pin",employee_id:id,pin}); await refreshEmployees(ok?t("doneSaved"):(j.error||t("serverError"))); }
 async function setEmployeeActive(id,active) { const {ok,j}=await employeeCall({action:"set_active",employee_id:id,active}); await refreshEmployees(ok?t("doneSaved"):(j.error||t("serverError"))); }
@@ -998,7 +1018,6 @@ function adminPanel() {
   const isMasterCaller = data.role === "master";   // admins see the panel but with limited powers
   const clients = adminData.clients || [];
   const users = adminData.users || [];
-  const aiConnections = adminData.ai_connections || [];
   const blockedPhones = adminData.blocked_phones || [];
   const clientName = code => (clients.find(c => c.call_center_code === code)?.display_name) || code || "—";
   const rows = users.map(u => {
@@ -1036,12 +1055,6 @@ function adminPanel() {
         <button onclick="toggleClient('${cc}',${active ? "false" : "true"})">${active ? t("deactivateBtn") : t("activateBtn")}</button>
         ${isMasterCaller ? `<button class="danger" onclick="deleteClient('${cc}')">${t("deleteBtn")}</button>` : ""}
       </td></tr>`;
-  }).join("");
-  const aiStatusByClient = new Map(aiConnections.map(c => [c.call_center_code, c]));
-  const aiRows = clients.map(c => {
-    const connection = aiStatusByClient.get(c.call_center_code);
-    const status = connection?.active ? `<span class="clean">Connected</span>` : `<span class="sub">Not connected</span>`;
-    return `<tr><td>${esc(c.display_name || c.call_center_code)}</td><td><span class="sub">${esc(c.call_center_code)}</span></td><td>${status}</td></tr>`;
   }).join("");
   const blockedPhoneRows = blockedPhones.map(p => `<tr>
     <td><code>${esc(p.install_id)}</code></td>
@@ -1082,16 +1095,37 @@ function adminPanel() {
     <div class="scroll"><table>
       <tr><th>${t("blockedPhoneId")}</th><th>${t("blockedAt")}</th><th></th></tr>
       ${blockedPhoneRows || `<tr><td colspan="3" class="sub">${t("noBlockedPhones")}</td></tr>`}</table></div>
-    ${isMasterCaller ? `<h2>Client AI setup</h2>
-    <p class="note">Paste one client's OpenRouter key here. The key is encrypted and never shown again. Set that key's daily spending cap first in OpenRouter.</p>
+    </div>`;
+}
+
+// Kept separate from Accounts deliberately: this page contains credentials and the
+// services that process recordings, while Accounts contains people and client access.
+function technicalSetupPanel() {
+  if (!adminData) return `<div id="loading">${t("loading")}</div>`;
+  const clients = adminData.clients || [];
+  const connections = new Map((adminData.ai_connections || []).map(c => [c.call_center_code, c]));
+  const opts = clients.map(c => `<option value="${esc(c.call_center_code)}">${esc(c.display_name || c.call_center_code)}</option>`).join("");
+  const rows = clients.map(c => {
+    const connected = connections.get(c.call_center_code)?.active;
+    return `<tr><td>${esc(c.display_name || c.call_center_code)}</td><td><span class="sub">${esc(c.call_center_code)}</span></td><td>${connected ? `<span class="clean">Connected</span>` : `<span class="att">Not connected</span>`}</td></tr>`;
+  }).join("");
+  return `<div class="${simulatorMode ? "sim-readonly" : ""}">
+    <h2>${t("technicalSetup")}</h2>
+    <p class="note">Master-only configuration for APIs, AI processing, and backend services. API keys are encrypted and are never shown again.</p>
+    ${adminMsg ? `<p class="note" style="color:var(--gGreen);font-weight:600">${esc(adminMsg)}</p>` : ""}
+    <h2>AI & recording pipeline</h2>
+    <p class="note">Each recording client needs its own OpenRouter key before AI transcription and analysis can run. Set that key's daily spending cap in OpenRouter first.</p>
     <div class="addform">
       <select id="ai_client"><option value="">Choose client</option>${opts}</select>
       <input id="ai_openrouter_key" type="password" autocomplete="off" spellcheck="false" placeholder="OpenRouter API key">
       <button onclick="saveOpenRouterKey()">Save client key</button>
     </div>
     <div class="scroll"><table><tr><th>Client</th><th>Code</th><th>AI key</th></tr>
-      ${aiRows || `<tr><td colspan="3" class="sub">No recording clients yet.</td></tr>`}</table></div>` : ""}
-    </div>`;
+      ${rows || `<tr><td colspan="3" class="sub">No recording clients yet.</td></tr>`}</table></div>
+    <h2>WhatsApp API & Inbox</h2>
+    <p class="note">Set up WhatsApp clients, provider connections, numbers, and Inbox access in the dedicated WhatsApp setup screen.</p>
+    <button onclick="openWhatsAppSetup()">Open WhatsApp setup</button>
+  </div>`;
 }
 
 async function adminCall(payload, retried) {
@@ -1110,12 +1144,19 @@ async function adminCall(payload, retried) {
 }
 
 async function openAccounts() {
-  adminMode = true; adminData = null; adminMsg = ""; render();
+  technicalSetupMode = false; adminMode = true; adminData = null; adminMsg = ""; render();
   const { ok, j } = await adminCall({ action: "list" });
   if (ok) adminData = j; else adminMsg = j.error || t("serverError");
   render();
 }
 function closeAccounts() { adminMode = false; adminMsg = ""; render(); }
+async function openTechnicalSetup() {
+  technicalSetupMode = true; adminData = null; adminMsg = ""; render();
+  const { ok, j } = await adminCall({ action: "list" });
+  if (ok) adminData = j; else adminMsg = j.error || t("serverError");
+  render();
+}
+function closeTechnicalSetup() { technicalSetupMode = false; adminMsg = ""; render(); }
 async function refreshAdmin() { const { ok, j } = await adminCall({ action: "list" }); if (ok) adminData = j; render(); }
 
 // ---- WhatsApp Inbox setup (master only) -------------------------------------
@@ -1154,7 +1195,7 @@ function whatsAppSetupPanel() {
   </div>`;
 }
 async function openWhatsAppSetup() {
-  whatsappSetupMode = true; whatsappSetupData = null; whatsappSetupMsg = ""; render();
+  technicalSetupMode = false; whatsappSetupMode = true; whatsappSetupData = null; whatsappSetupMsg = ""; render();
   const { ok, j } = await adminCall({ action: "list_whatsapp" });
   if (ok) whatsappSetupData = j; else whatsappSetupMsg = j.error || t("serverError");
   render();
