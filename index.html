@@ -34,6 +34,15 @@ header.top .brand-logo { height:30px; width:auto; }
 header.top span.sub { opacity:.7; font-size:13px; flex:1; }
 header.top button { background:var(--green); color:#fff; border:0; border-radius:8px; padding:8px 16px; font-weight:600; cursor:pointer; font-size:13px; font-family:inherit; }
 header.top button.ghost { background:transparent; border:1px solid rgba(255,255,255,.35); }
+.header-menu { position:relative; }
+.header-menu summary { list-style:none; background:transparent; color:var(--cream); border:1px solid rgba(255,255,255,.35); border-radius:8px; padding:8px 14px; font-weight:600; cursor:pointer; font-size:13px; white-space:nowrap; }
+.header-menu summary::-webkit-details-marker { display:none; }
+.header-menu summary::after { content:"⌄"; margin-inline-start:7px; }
+.header-menu[open] summary { background:rgba(255,255,255,.12); }
+.header-menu .menu-popover { position:absolute; z-index:20; top:calc(100% + 7px); inset-inline-end:0; min-width:205px; padding:6px; background:#fff; border-radius:10px; box-shadow:0 8px 24px rgba(13,27,42,.25); }
+.header-menu .menu-popover button { display:block; width:100%; background:transparent; color:var(--navy); border:0; border-radius:7px; padding:9px 11px; text-align:start; font-size:13px; }
+.header-menu .menu-popover button:hover { background:#f1f4f1; }
+.header-menu .menu-popover .menu-divider { height:1px; background:var(--cream2); margin:5px 2px; }
 .langtoggle { display:inline-flex; border:1px solid rgba(255,255,255,.35); border-radius:8px; overflow:hidden; }
 .langtoggle button { background:transparent; color:var(--cream); border:0; border-radius:0; padding:7px 12px; font-weight:600; cursor:pointer; font-size:13px; font-family:inherit; }
 .langtoggle button.active { background:var(--green); color:#fff; }
@@ -237,7 +246,7 @@ const T = {
     never:"never", ago:"ago", lastSeen:"last seen", emptyPhones:"No phones in this client yet.",
     recordingsTitle:"Recent recordings", recordingsNote:"New calls appear after upload. Audio links are private and refresh for one hour.", noRecordings:"No recordings yet.", colWhen:"When", colAgent:"Agent", colLength:"Length", colListen:"Listen",
     note:"<b>Green</b> = recording & healthy. <b>Red</b> = follow up: <i>Offline</i> (phone off / no internet), <i>Went dark</i> (no check-in for a day — likely off or app removed), <i>Not recording</i> (Shizuku off), low <i>battery</i> (&lt;15% unplugged) or nearly-full <i>storage</i> (&lt;300 MB). 🔌 = charging. Grey = paused.",
-    accounts:"Accounts", technicalSetup:"Technical setup", backToHealth:"← Back to dashboard", accountsTitle:"Dashboard logins",
+    accounts:"Accounts", technicalSetup:"Technical setup", pipelineOps:"Pipeline operations", more:"More", whatsappSetup:"WhatsApp setup", whatsappInbox:"WhatsApp Inbox", leads:"Leads", backToHealth:"← Back to dashboard", accountsTitle:"Dashboard logins",
     employeesMenu:"Employees", employeesTitle:"Center employees", employeesNote:"Employees use their name and a 4-digit PIN to clock in on shared Shareek phones.",
     addEmployee:"Add employee", employeeName:"employee name", employeePin:"4-digit PIN", employeeClient:"Assign to client", noEmployees:"No employees added yet.",
     renameEmployee:"Rename", resetPin:"Reset PIN", deactivateEmployee:"Deactivate", activateEmployee:"Activate",
@@ -317,7 +326,7 @@ const T = {
     never:"أبداً", ago:"منذ", lastSeen:"آخر ظهور", emptyPhones:"لا توجد أجهزة في هذا المركز بعد.",
     recordingsTitle:"التسجيلات الأخيرة", recordingsNote:"تظهر المكالمات الجديدة بعد رفعها. روابط الاستماع خاصة وتتجدد لمدة ساعة.", noRecordings:"لا توجد تسجيلات بعد.", colWhen:"الوقت", colAgent:"الموظف", colLength:"المدة", colListen:"استماع",
     note:"<b>أخضر</b> = يسجّل وسليم. <b>أحمر</b> = يحتاج متابعة: <i>غير متصل</i> (الجهاز مطفأ أو لا إنترنت)، <i>انقطع</i> (لا اتصال منذ يوم — غالباً مطفأ أو حُذف التطبيق)، <i>لا يسجّل</i> (Shizuku متوقف)، <i>بطارية</i> منخفضة (أقل من 15% وغير موصول) أو <i>تخزين</i> شبه ممتلئ (أقل من 300 ميغابايت). 🔌 = يشحن. رمادي = موقوف.",
-    accounts:"الحسابات", technicalSetup:"الإعدادات التقنية", backToHealth:"← رجوع للوحة", accountsTitle:"حسابات الدخول",
+    accounts:"الحسابات", technicalSetup:"الإعدادات التقنية", pipelineOps:"عمليات المعالجة", more:"المزيد", whatsappSetup:"إعداد واتساب", whatsappInbox:"صندوق واتساب", leads:"العملاء المحتملون", backToHealth:"← رجوع للوحة", accountsTitle:"حسابات الدخول",
     employeesMenu:"الموظفون", employeesTitle:"موظفو المركز", employeesNote:"يستخدم الموظف اسمه ورمزاً من ٤ أرقام لتسجيل بداية دوامه على هواتف شريك المشتركة.",
     addEmployee:"إضافة موظف", employeeName:"اسم الموظف", employeePin:"رمز من ٤ أرقام", employeeClient:"تعيين للمركز", noEmployees:"لم تتم إضافة الموظفين بعد.",
     renameEmployee:"تغيير الاسم", resetPin:"إعادة تعيين الرمز", deactivateEmployee:"إيقاف", activateEmployee:"تفعيل",
@@ -817,6 +826,20 @@ function render() {
     <button onclick="showSimulator()">${t("simulatorSwitch")}</button>
     <button onclick="exitSimulator()">${t("simulatorExit")}</button>
   </div>` : "";
+  // Keep the day-to-day master work visible. Configuration and occasional tools
+  // live behind one compact menu so the header stays easy to scan.
+  const primaryNav = `${isMaster && !simulatorMode ? `<button class="ghost" onclick="openPipelineOps()">${t("pipelineOps")}</button>` : ""}
+    ${canAnalytics ? `<button class="ghost" onclick="openAnalytics()">${t("analytics")}</button>` : ""}
+    ${(isSupervisor || canManage) ? `<button class="ghost" onclick="openEmployees()">${t("employeesMenu")}</button>` : ""}
+    ${!isMaster && canManage ? `<button class="ghost" onclick="openAccounts()">${t("accounts")}</button>` : ""}`;
+  const moreItems = `${isMaster && !simulatorMode ? `<button onclick="openAccounts()">${t("accounts")}</button>
+      <button onclick="openTechnicalSetup()">${t("technicalSetup")}</button>
+      <div class="menu-divider"></div>` : ""}
+    ${isMaster && !simulatorMode ? `<button onclick="openWhatsAppSetup()">${t("whatsappSetup")}</button>` : ""}
+    ${canUseInbox && !simulatorMode ? `<button onclick="openWhatsAppInbox()">${t("whatsappInbox")}</button>` : ""}
+    ${canUseLeads && !simulatorMode ? `<button onclick="openLeads()">${t("leads")}</button>` : ""}
+    ${isMaster && !simulatorMode ? `<div class="menu-divider"></div><button onclick="showSimulator()">${t("simulatorMenu")}</button>` : ""}`;
+  const moreMenu = moreItems.trim() ? `<details class="header-menu"><summary>${t("more")}</summary><div class="menu-popover">${moreItems}</div></details>` : "";
   const header = `${simulationBanner}<header class="top"><h1>${LOGO}Shareek</h1>
     <span class="sub">${t("title")} · ${t("subtitle")} ${fmtTime(data.generated_at)}</span>
     <div class="langtoggle">
@@ -837,15 +860,7 @@ function render() {
       : canAnalytics && analyticsMode
       ? `<button class="ghost" onclick="closeAnalytics()">${t("backToHealth")}</button>
          <button onclick="exportAnalyticsPdf()">${t("exportPdf")}</button>`
-      : `${canManage ? `<button class="ghost" onclick="openAccounts()">${t("accounts")}</button>` : ""}
-         ${isMaster && !simulatorMode ? `<button class="ghost" onclick="openTechnicalSetup()">⚙️ ${t("technicalSetup")}</button>` : ""}
-         ${isMaster && !simulatorMode ? `<button class="ghost" onclick="openPipelineOps()">⚙️ Pipeline operations</button>` : ""}
-         ${canAnalytics ? `<button class="ghost" onclick="openAnalytics()">${t("analytics")}</button>` : ""}
-         ${(isSupervisor || canManage) ? `<button class="ghost" onclick="openEmployees()">${t("employeesMenu")}</button>` : ""}
-         ${isMaster && !simulatorMode ? `<button class="ghost" onclick="openWhatsAppSetup()">⚙️ WhatsApp Setup</button>` : ""}
-         ${canUseInbox && !simulatorMode ? `<button class="ghost" onclick="openWhatsAppInbox()">📩 WhatsApp Inbox</button>` : ""}
-         ${canUseLeads && !simulatorMode ? `<button class="ghost" onclick="openLeads()">🎯 Leads</button>` : ""}
-         ${isMaster && !simulatorMode ? `<button class="ghost" onclick="showSimulator()">${t("simulatorMenu")}</button>` : ""}`}
+      : `${primaryNav}${moreMenu}`}
     <button class="ghost" onclick="logout()">${t("logout")}</button>
   </header>`;
 
