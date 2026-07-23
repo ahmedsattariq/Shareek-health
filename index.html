@@ -117,6 +117,8 @@ tr.muted td { color:#999; }
 .scroll { overflow-x:auto; margin-bottom:24px; }
 .dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-inline-end:6px; vertical-align:middle; }
 .sub { color:#777; font-size:11px; }
+.status-stack { display:flex; flex-direction:column; align-items:flex-start; gap:4px; white-space:nowrap; }
+.status-signal { display:inline-flex; align-items:center; }
 .att-pill { display:inline-block; background:#fbe0dd; color:#c0392b; border-radius:999px; padding:1px 8px; font-size:11px; font-weight:700; }
 .note { font-size:12px; color:#666; margin:6px 0 14px; }
 .empty { padding:22px; text-align:center; color:#777; background:#fff; border-radius:12px; box-shadow:0 1px 4px rgba(13,27,42,.12); }
@@ -254,10 +256,11 @@ const T = {
     colPhone:"Phone", colEmployee:"Current employee", colStatus:"Status", colBattery:"Battery", colStorage:"Storage",
     colLastRec:"Last recording", colLastCheckin:"Last check-in", colDevice:"Device",
     stHealthy:"Recording", stOffline:"Offline", stDark:"Went dark", stNotRec:"Not recording",
+    employeeSignedIn:"Signed in", employeeNotSignedIn:"Not signed in",
     stPaused:"Paused", stRetired:"Retired",
     never:"never", ago:"ago", lastSeen:"last seen", emptyPhones:"No phones in this client yet.",
     recordingsTitle:"Recent recordings", recordingsNote:"New calls appear after upload. Audio links are private and refresh for one hour.", noRecordings:"No recordings yet.", colWhen:"When", colAgent:"Agent", colLength:"Length", colListen:"Listen",
-    note:"<b>Green</b> = recording & healthy. <b>Red</b> = follow up: <i>Offline</i> (phone off / no internet), <i>Went dark</i> (no check-in for a day — likely off or app removed), <i>Not recording</i> (Shizuku off), low <i>battery</i> (&lt;15% unplugged) or nearly-full <i>storage</i> (&lt;300 MB). 🔌 = charging. Grey = paused.",
+    note:"<b>Green</b> = recording & healthy. <b>Red</b> = follow up: <i>Offline</i> (phone off / no internet), <i>Went dark</i> (no check-in for a day — likely off or app removed), <i>Not recording</i> (Shizuku off), low <i>battery</i> (&lt;15% unplugged) or nearly-full <i>storage</i> (&lt;300 MB). <b>Amber</b> = no employee is signed in. 🔌 = charging. Grey = paused.",
     accounts:"Accounts", technicalSetup:"Technical setup", pipelineOps:"Pipeline operations", more:"More", whatsappSetup:"WhatsApp setup", whatsappInbox:"WhatsApp Inbox", leads:"Leads", backToHealth:"← Back to dashboard", accountsTitle:"Dashboard logins",
     employeesMenu:"Employees", employeesTitle:"Center employees", employeesNote:"Employees use their name and a 4-digit PIN to clock in on shared Shareek phones.",
     addEmployee:"Add employee", employeeName:"employee name", employeePin:"4-digit PIN", employeeClient:"Assign to client", noEmployees:"No employees added yet.",
@@ -334,10 +337,11 @@ const T = {
     colPhone:"الجهاز", colEmployee:"الموظف الحالي", colStatus:"الحالة", colBattery:"البطارية", colStorage:"التخزين",
     colLastRec:"آخر تسجيل", colLastCheckin:"آخر اتصال", colDevice:"الجهاز",
     stHealthy:"يسجّل", stOffline:"غير متصل", stDark:"انقطع", stNotRec:"لا يسجّل",
+    employeeSignedIn:"تم تسجيل الدخول", employeeNotSignedIn:"لم يسجّل الدخول",
     stPaused:"موقوف", stRetired:"متقاعد",
     never:"أبداً", ago:"منذ", lastSeen:"آخر ظهور", emptyPhones:"لا توجد أجهزة في هذا المركز بعد.",
     recordingsTitle:"التسجيلات الأخيرة", recordingsNote:"تظهر المكالمات الجديدة بعد رفعها. روابط الاستماع خاصة وتتجدد لمدة ساعة.", noRecordings:"لا توجد تسجيلات بعد.", colWhen:"الوقت", colAgent:"الموظف", colLength:"المدة", colListen:"استماع",
-    note:"<b>أخضر</b> = يسجّل وسليم. <b>أحمر</b> = يحتاج متابعة: <i>غير متصل</i> (الجهاز مطفأ أو لا إنترنت)، <i>انقطع</i> (لا اتصال منذ يوم — غالباً مطفأ أو حُذف التطبيق)، <i>لا يسجّل</i> (Shizuku متوقف)، <i>بطارية</i> منخفضة (أقل من 15% وغير موصول) أو <i>تخزين</i> شبه ممتلئ (أقل من 300 ميغابايت). 🔌 = يشحن. رمادي = موقوف.",
+    note:"<b>أخضر</b> = يسجّل وسليم. <b>أحمر</b> = يحتاج متابعة: <i>غير متصل</i> (الجهاز مطفأ أو لا إنترنت)، <i>انقطع</i> (لا اتصال منذ يوم — غالباً مطفأ أو حُذف التطبيق)، <i>لا يسجّل</i> (Shizuku متوقف)، <i>بطارية</i> منخفضة (أقل من 15% وغير موصول) أو <i>تخزين</i> شبه ممتلئ (أقل من 300 ميغابايت). <b>برتقالي</b> = لا يوجد موظف مسجّل الدخول. 🔌 = يشحن. رمادي = موقوف.",
     accounts:"الحسابات", technicalSetup:"الإعدادات التقنية", pipelineOps:"عمليات المعالجة", more:"المزيد", whatsappSetup:"إعداد واتساب", whatsappInbox:"صندوق واتساب", leads:"العملاء المحتملون", backToHealth:"← رجوع للوحة", accountsTitle:"حسابات الدخول",
     employeesMenu:"الموظفون", employeesTitle:"موظفو المركز", employeesNote:"يستخدم الموظف اسمه ورمزاً من ٤ أرقام لتسجيل بداية دوامه على هواتف شريك المشتركة.",
     addEmployee:"إضافة موظف", employeeName:"اسم الموظف", employeePin:"رمز من ٤ أرقام", employeeClient:"تعيين للمركز", noEmployees:"لم تتم إضافة الموظفين بعد.",
@@ -500,7 +504,15 @@ function statusMeta(s) {
   }
 }
 const needsAttention = p =>
-  ["offline", "dark", "not_recording"].includes(p.status) || p.low_battery || p.low_storage;
+  ["offline", "dark", "not_recording"].includes(p.status) ||
+  (!["paused", "retired"].includes(p.status) && !p.current_employee_name) ||
+  p.low_battery || p.low_storage;
+
+function employeeSignal(p) {
+  return p.current_employee_name
+    ? { c:GREEN, label:t("employeeSignedIn") }
+    : { c:AMBER, label:t("employeeNotSignedIn") };
+}
 
 function rollup(client) {
   let online = 0, attention = 0, active = 0;
@@ -536,6 +548,7 @@ function phoneTable(client) {
   const phones = [...client.phones].sort((a, b) => rank(a) - rank(b));
   const rows = phones.map(p => {
     const m = statusMeta(p.status);
+    const employee = employeeSignal(p);
     const muted = p.status === "paused" || p.status === "retired";
     const darkNote = p.status === "dark" && p.reported_at
       ? ` <span class="sub">(${t("lastSeen")} ${t("ago")} ${ago(p.reported_at)})</span>` : "";
@@ -543,8 +556,8 @@ function phoneTable(client) {
     const subtitle = p.label && p.agent_name ? p.agent_name : "";
     return `<tr class="${p.status === "dark" ? "dark" : ""}${muted ? " muted" : ""}">
       <td>${esc(name)}${subtitle ? `<br><span class="sub">${esc(subtitle)}</span>` : ""}</td>
-      <td>${esc(p.current_employee_name || "—")}</td>
-      <td>${dot(m.c)}${m.label}${darkNote}</td>
+      <td>${p.current_employee_name ? esc(p.current_employee_name) : `<span class="status-signal">${dot(employee.c)}${employee.label}</span>`}</td>
+      <td><div class="status-stack"><span class="status-signal">${dot(m.c)}${m.label}${darkNote}</span><span class="status-signal">${dot(employee.c)}${employee.label}</span></div></td>
       ${batteryCell(p)}
       ${storageCell(p)}
       <td>${p.last_recording_at ? fmtTime(p.last_recording_at) : t("never")}</td>
