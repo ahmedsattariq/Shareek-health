@@ -34,15 +34,26 @@ header.top .brand-logo { height:30px; width:auto; }
 header.top span.sub { opacity:.7; font-size:13px; flex:1; }
 header.top button { background:var(--green); color:#fff; border:0; border-radius:8px; padding:8px 16px; font-weight:600; cursor:pointer; font-size:13px; font-family:inherit; }
 header.top button.ghost { background:transparent; border:1px solid rgba(255,255,255,.35); }
+button, .header-menu summary { -webkit-tap-highlight-color:transparent; transition:transform .16s ease, box-shadow .2s ease, background-color .2s ease, border-color .2s ease; }
+button:not(:disabled):hover, .header-menu summary:hover { transform:translateY(-1px); }
+button:not(:disabled):active, .header-menu summary:active { transform:translateY(1px) scale(.98); }
+button:focus-visible, .header-menu summary:focus-visible { outline:3px solid rgba(211,209,199,.52); outline-offset:3px; }
+.refresh-control { display:inline-flex; align-items:center; gap:7px; min-width:112px; justify-content:center; box-shadow:0 3px 10px rgba(76,175,125,.2); }
+.refresh-control .refresh-icon { display:inline-block; font-size:15px; line-height:1; }
+.refresh-control.is-refreshing { cursor:wait; box-shadow:0 0 0 4px rgba(76,175,125,.16), 0 4px 14px rgba(76,175,125,.3); }
+.refresh-control.is-refreshing .refresh-icon { animation:refresh-spin .72s linear infinite; }
+@keyframes refresh-spin { to { transform:rotate(360deg); } }
 .header-menu { position:relative; }
 .header-menu summary { list-style:none; background:transparent; color:var(--cream); border:1px solid rgba(255,255,255,.35); border-radius:8px; padding:8px 14px; font-weight:600; cursor:pointer; font-size:13px; white-space:nowrap; }
 .header-menu summary::-webkit-details-marker { display:none; }
 .header-menu summary::after { content:"⌄"; margin-inline-start:7px; }
-.header-menu[open] summary { background:rgba(255,255,255,.12); }
-.header-menu .menu-popover { position:absolute; z-index:20; top:calc(100% + 7px); inset-inline-end:0; min-width:205px; padding:6px; background:#fff; border-radius:10px; box-shadow:0 8px 24px rgba(13,27,42,.25); }
+.header-menu[open] summary { background:rgba(255,255,255,.12); box-shadow:0 0 0 4px rgba(211,209,199,.08); }
+.header-menu[open] summary::after { display:inline-block; transform:rotate(180deg); }
+.header-menu .menu-popover { position:absolute; z-index:20; top:calc(100% + 7px); inset-inline-end:0; min-width:205px; padding:6px; background:#fff; border-radius:10px; box-shadow:0 8px 24px rgba(13,27,42,.25); transform-origin:top right; animation:menu-arrive .18s ease-out both; }
 .header-menu .menu-popover button { display:block; width:100%; background:transparent; color:var(--navy); border:0; border-radius:7px; padding:9px 11px; text-align:start; font-size:13px; }
-.header-menu .menu-popover button:hover { background:#f1f4f1; }
+.header-menu .menu-popover button:hover { background:#f1f4f1; transform:translateX(2px); }
 .header-menu .menu-popover .menu-divider { height:1px; background:var(--cream2); margin:5px 2px; }
+@keyframes menu-arrive { from { opacity:0; transform:translateY(-5px) scale(.98); } to { opacity:1; transform:translateY(0) scale(1); } }
 .langtoggle { display:inline-flex; border:1px solid rgba(255,255,255,.35); border-radius:8px; overflow:hidden; }
 .langtoggle button { background:transparent; color:var(--cream); border:0; border-radius:0; padding:7px 12px; font-weight:600; cursor:pointer; font-size:13px; font-family:inherit; }
 .langtoggle button.active { background:var(--green); color:#fff; }
@@ -114,6 +125,7 @@ h2 .att { color:var(--gRed); }
 .addform { display:flex; gap:8px; flex-wrap:wrap; align-items:center; background:#fff; padding:14px; border-radius:12px; box-shadow:0 1px 4px rgba(13,27,42,.12); margin-bottom:24px; }
 .addform input, .addform select { padding:9px 11px; border:1px solid var(--cream2); border-radius:8px; font-family:inherit; font-size:13px; }
 .addform button { background:var(--green); color:#fff; border:0; border-radius:8px; padding:9px 16px; font-weight:600; cursor:pointer; font-family:inherit; font-size:13px; }
+.pipeline-refresh { margin:2px 0 16px; }
 .context-editor { width:100%; min-height:280px; resize:vertical; padding:12px; border:1px solid var(--cream2); border-radius:10px; font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace; direction:auto; background:#fff; color:var(--navy); }
 .context-audit { margin:0; padding-inline-start:20px; font-size:12px; color:#555; }
 .context-audit li { margin:5px 0; }
@@ -446,6 +458,8 @@ let aiContextSourceName = "";
 let pipelineOpsMode = false; // Master-only queue, recovery, and audit view
 let pipelineOpsData = null;
 let pipelineOpsMsg = "";
+let dashboardRefreshing = false;
+let pipelineOpsRefreshing = false;
 let whatsappSetupMode = false; // Master-only WhatsApp Inbox onboarding
 let whatsappSetupData = null;  // { clients, channels, users }
 let whatsappSetupMsg = "";
@@ -799,6 +813,19 @@ async function load(fromLogin, retried) {
   render();
 }
 
+// Keep the existing refresh request exactly as it is, while making the button
+// acknowledge the tap immediately and preventing duplicate requests.
+async function refreshDashboard() {
+  if (dashboardRefreshing) return;
+  dashboardRefreshing = true;
+  render();
+  try { await load(); }
+  finally {
+    dashboardRefreshing = false;
+    if (data) render();
+  }
+}
+
 function sortedClients() {
   return [...(data.clients || [])].sort((a, b) => {
     const ra = rollup(a), rb = rollup(b);
@@ -849,7 +876,7 @@ function render() {
       <button class="${lang === "ar" ? "active" : ""}" onclick="setLang('ar')">العربية</button>
       <button class="${lang === "en" ? "active" : ""}" onclick="setLang('en')">English</button>
     </div>` : ""}
-    ${!adminMode && !technicalSetupMode && !pipelineOpsMode && !analyticsMode && !employeesMode ? `<button onclick="load()">${t("refresh")}</button>` : ""}
+    ${!adminMode && !technicalSetupMode && !pipelineOpsMode && !analyticsMode && !employeesMode ? `<button class="refresh-control ${dashboardRefreshing ? "is-refreshing" : ""}" onclick="refreshDashboard()" ${dashboardRefreshing ? 'aria-busy="true"' : ""}><span class="refresh-icon" aria-hidden="true">↻</span>${t("refresh")}</button>` : ""}
     ${(isSupervisor || canManage) && employeesMode
       ? `<button class="ghost" onclick="closeEmployees()">${t("backToHealth")}</button>`
       : canManage && adminMode
@@ -1350,7 +1377,7 @@ function pipelineOperationsPanel() {
     <h2>Pipeline operations</h2>
     <p class="note">Master-only controls. Pause stops new processing for a client; in-flight work can finish. Recovery requests are queued for the backend worker and are fully audited.</p>
     ${pipelineOpsMsg ? `<p class="note" style="color:var(--gGreen);font-weight:600">${esc(pipelineOpsMsg)}</p>` : ""}
-    <button onclick="refreshPipelineOps()">Refresh operations</button>
+    <button class="refresh-control pipeline-refresh ${pipelineOpsRefreshing ? "is-refreshing" : ""}" onclick="refreshPipelineOps()" ${pipelineOpsRefreshing ? 'aria-busy="true"' : ""}><span class="refresh-icon" aria-hidden="true">↻</span>Refresh operations</button>
     <div class="scroll"><table><tr><th>Client</th><th>State</th><th>Backlog</th><th>Errors</th><th>Queued actions</th><th>Controls</th></tr>${clientRows || `<tr><td colspan="6" class="sub">No recording clients yet.</td></tr>`}</table></div>
     <h2>Current errors</h2><p class="note">Retry keeps completed work when safe. Reprocess clears only this recording’s transcript and analysis; it preserves CRM leads and staff edits.</p>
     <div class="scroll"><table><tr><th>Client</th><th>Agent</th><th>Recorded</th><th>Error</th><th></th></tr>${errorRows || `<tr><td colspan="5" class="sub">No current pipeline errors.</td></tr>`}</table></div>
@@ -1369,9 +1396,13 @@ async function pipelineOpsCall(payload, retried) {
   return { ok:res.ok, j:await res.json().catch(() => ({})) };
 }
 async function refreshPipelineOps() {
+  if (pipelineOpsRefreshing) return;
+  pipelineOpsRefreshing = true;
+  render();
   const { ok, j } = await pipelineOpsCall({ action:"list" });
   if (ok) { pipelineOpsData = j; pipelineOpsMsg = ""; }
   else pipelineOpsMsg = j.error || t("serverError");
+  pipelineOpsRefreshing = false;
   render();
 }
 async function openPipelineOps() {
