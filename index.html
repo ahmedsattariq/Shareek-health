@@ -105,10 +105,13 @@ h2 .att { color:var(--gRed); }
 .addform { display:flex; gap:8px; flex-wrap:wrap; align-items:center; background:#fff; padding:14px; border-radius:12px; box-shadow:0 1px 4px rgba(13,27,42,.12); margin-bottom:24px; }
 .addform input, .addform select { padding:9px 11px; border:1px solid var(--cream2); border-radius:8px; font-family:inherit; font-size:13px; }
 .addform button { background:var(--green); color:#fff; border:0; border-radius:8px; padding:9px 16px; font-weight:600; cursor:pointer; font-family:inherit; font-size:13px; }
+.context-editor { width:100%; min-height:280px; resize:vertical; padding:12px; border:1px solid var(--cream2); border-radius:10px; font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace; direction:auto; background:#fff; color:var(--navy); }
+.context-audit { margin:0; padding-inline-start:20px; font-size:12px; color:#555; }
+.context-audit li { margin:5px 0; }
 td.acts { white-space:nowrap; }
 td.acts button { background:var(--navy); color:var(--cream); border:0; border-radius:7px; padding:5px 10px; font-size:12px; font-weight:600; cursor:pointer; font-family:inherit; margin-inline-end:5px; }
 td.acts button.danger { background:#c0392b; color:#fff; }
-.sim-readonly button, .sim-readonly input, .sim-readonly select { pointer-events:none; opacity:.48; }
+.sim-readonly button, .sim-readonly input, .sim-readonly select, .sim-readonly textarea { pointer-events:none; opacity:.48; }
 
 /* ---- CEO analytics dashboard ---- */
 .ok { color:var(--gGreen); font-weight:700; } .bad { color:#c0392b; font-weight:700; }
@@ -196,6 +199,7 @@ td.acts button.danger { background:#c0392b; color:#fff; }
 const SB = "https://pxeiozmsfvmypcsqbcqv.supabase.co";
 const API = SB + "/functions/v1/health";
 const ADMIN_API = SB + "/functions/v1/admin";
+const PIPELINE_OPS_API = SB + "/functions/v1/pipeline-ops";
 const ANALYTICS_API = SB + "/functions/v1/analytics";
 const EMPLOYEES_API = SB + "/functions/v1/employees";
 // Public anon key — identifies the project to Supabase Auth + the function gateway. The real gate is
@@ -426,6 +430,13 @@ let adminMode = false;  // Accounts view (master + admin/field-tech)
 let adminData = null;   // { users, clients }
 let adminMsg = "";      // last action feedback
 let technicalSetupMode = false; // Master-only API, AI, and pipeline configuration
+let aiContextOverview = null;   // master-only per-client context metadata
+let aiContextDetail = null;     // selected client's versions + one content body
+let aiContextMsg = "";
+let aiContextSourceName = "";
+let pipelineOpsMode = false; // Master-only queue, recovery, and audit view
+let pipelineOpsData = null;
+let pipelineOpsMsg = "";
 let whatsappSetupMode = false; // Master-only WhatsApp Inbox onboarding
 let whatsappSetupData = null;  // { clients, channels, users }
 let whatsappSetupMsg = "";
@@ -812,13 +823,15 @@ function render() {
       <button class="${lang === "ar" ? "active" : ""}" onclick="setLang('ar')">العربية</button>
       <button class="${lang === "en" ? "active" : ""}" onclick="setLang('en')">English</button>
     </div>
-    ${!adminMode && !technicalSetupMode && !analyticsMode && !employeesMode ? `<button onclick="load()">${t("refresh")}</button>` : ""}
+    ${!adminMode && !technicalSetupMode && !pipelineOpsMode && !analyticsMode && !employeesMode ? `<button onclick="load()">${t("refresh")}</button>` : ""}
     ${(isSupervisor || canManage) && employeesMode
       ? `<button class="ghost" onclick="closeEmployees()">${t("backToHealth")}</button>`
       : canManage && adminMode
       ? `<button class="ghost" onclick="closeAccounts()">${t("backToHealth")}</button>`
       : isMaster && technicalSetupMode
       ? `<button class="ghost" onclick="closeTechnicalSetup()">${t("backToHealth")}</button>`
+      : isMaster && pipelineOpsMode
+      ? `<button class="ghost" onclick="closePipelineOps()">${t("backToHealth")}</button>`
       : isMaster && whatsappSetupMode
       ? `<button class="ghost" onclick="closeWhatsAppSetup()">${t("backToHealth")}</button>`
       : canAnalytics && analyticsMode
@@ -826,6 +839,7 @@ function render() {
          <button onclick="exportAnalyticsPdf()">${t("exportPdf")}</button>`
       : `${canManage ? `<button class="ghost" onclick="openAccounts()">${t("accounts")}</button>` : ""}
          ${isMaster && !simulatorMode ? `<button class="ghost" onclick="openTechnicalSetup()">⚙️ ${t("technicalSetup")}</button>` : ""}
+         ${isMaster && !simulatorMode ? `<button class="ghost" onclick="openPipelineOps()">⚙️ Pipeline operations</button>` : ""}
          ${canAnalytics ? `<button class="ghost" onclick="openAnalytics()">${t("analytics")}</button>` : ""}
          ${(isSupervisor || canManage) ? `<button class="ghost" onclick="openEmployees()">${t("employeesMenu")}</button>` : ""}
          ${isMaster && !simulatorMode ? `<button class="ghost" onclick="openWhatsAppSetup()">⚙️ WhatsApp Setup</button>` : ""}
@@ -842,6 +856,11 @@ function render() {
 
   if (technicalSetupMode && isMaster) {
     app.innerHTML = header + `<div class="wrap">${technicalSetupPanel()}</div>`;
+    return;
+  }
+
+  if (pipelineOpsMode && isMaster) {
+    app.innerHTML = header + `<div class="wrap">${pipelineOperationsPanel()}</div>`;
     return;
   }
 
@@ -954,7 +973,7 @@ function openAuthenticatedModule(path) {
   }));
   window.open(`${path}#shareek_session=${handoff}`, "_blank", "noopener");
 }
-function logout() { simulatorMode = false; simulatorPickerOpen = false; simulatorRole = null; liveDataBeforeSimulation = null; employeesMode = false; employeesData = null; technicalSetupMode = false; whatsappSetupMode = false; whatsappSetupData = null; session = null; data = null; selectedCode = null; stopTimer(); loginScreen(); }
+function logout() { simulatorMode = false; simulatorPickerOpen = false; simulatorRole = null; liveDataBeforeSimulation = null; employeesMode = false; employeesData = null; technicalSetupMode = false; pipelineOpsMode = false; pipelineOpsData = null; pipelineOpsMsg = ""; whatsappSetupMode = false; whatsappSetupData = null; session = null; data = null; selectedCode = null; stopTimer(); loginScreen(); }
 function startTimer() { stopTimer(); if (!simulatorMode) timer = setInterval(() => { if (session) load(); }, REFRESH_MS); }
 function stopTimer() { if (timer) { clearInterval(timer); timer = null; } }
 function route() { if (simulatorPickerOpen) showSimulator(); else if (session && data) render(); else loginScreen(); }
@@ -1124,10 +1143,63 @@ function technicalSetupPanel() {
     </div>
     <div class="scroll"><table><tr><th>Client</th><th>Code</th><th>AI key</th></tr>
       ${rows || `<tr><td colspan="3" class="sub">No recording clients yet.</td></tr>`}</table></div>
+    ${aiContextPanel()}
     <h2>WhatsApp API & Inbox</h2>
     <p class="note">Set up WhatsApp clients, provider connections, numbers, and Inbox access in the dedicated WhatsApp setup screen.</p>
     <button onclick="openWhatsAppSetup()">Open WhatsApp setup</button>
   </div>`;
+}
+
+// Context is intentionally shown inside Technical setup: this screen is already
+// master-only and contains the other server-side AI controls. The browser sees
+// only one selected client's text at a time, after the Edge Function checks the
+// caller's master role again.
+function aiContextPanel() {
+  if (!aiContextOverview) return `<h2>Client AI context</h2><div id="loading">Loading AI context…</div>`;
+  const clients = aiContextOverview.clients || [];
+  if (!clients.length) return `<h2>Client AI context</h2><div class="empty">Add a recording client before adding AI context.</div>`;
+  const selected = aiContextDetail?.client?.call_center_code || clients[0].call_center_code;
+  const opts = clients.map(c => `<option value="${esc(c.call_center_code)}" ${c.call_center_code === selected ? "selected" : ""}>${esc(c.display_name || c.call_center_code)} · ${c.active_version_number ? "v" + c.active_version_number + " active" : "no active version"}</option>`).join("");
+  if (!aiContextDetail) return `<h2>Client AI context</h2><div class="addform"><select id="context_client">${opts}</select><button onclick="selectAiContext()">Open context</button></div>`;
+
+  const detail = aiContextDetail;
+  const versions = detail.versions || [];
+  const activeId = detail.active_version_id;
+  const current = versions.find(v => v.id === detail.selected_version_id);
+  const versionRows = versions.map(v => {
+    const isActive = v.id === activeId;
+    const isPreview = v.id === detail.selected_version_id;
+    return `<tr>
+      <td><b>v${esc(v.version_number)}</b>${isActive ? ` <span class="clean">Active</span>` : ""}</td>
+      <td>${v.source_filename ? esc(v.source_filename) : "—"}${v.change_note ? `<br><small class="sub">${esc(v.change_note)}</small>` : ""}</td>
+      <td>${fmtTime(v.created_at)}<br><small class="sub">${esc(v.created_by_email || "master")}</small></td>
+      <td class="acts"><button onclick="previewAiContextVersion('${esc(v.id)}')">${isPreview ? "Previewing" : "Preview"}</button>${!isActive ? `<button onclick="activateAiContextVersion('${esc(v.id)}',${esc(v.version_number)})">Activate</button>` : ""}</td>
+    </tr>`;
+  }).join("");
+  const audit = (detail.audit_events || []).slice(0, 12).map(event => {
+    const version = versions.find(v => v.id === event.version_id);
+    const action = event.event_type === "version_created" ? "created" : "activated";
+    return `<li>${fmtTime(event.created_at)} — ${esc(event.actor_email || "master")} ${action} ${version ? "v" + esc(version.version_number) : "a version"}</li>`;
+  }).join("");
+  return `<section class="section">
+    <h2>Client AI context</h2>
+    <p class="note">Paste Markdown/text or choose a <code>.md</code> / <code>.txt</code> file. Saving always creates a new immutable version; it never overwrites the version you are viewing. Uploaded text stays in Supabase, not on this server's filesystem.</p>
+    ${aiContextMsg ? `<p class="note" style="color:var(--gGreen);font-weight:600">${esc(aiContextMsg)}</p>` : ""}
+    <div class="addform"><select id="context_client" onchange="selectAiContext()">${opts}</select><button onclick="selectAiContext()">Load client</button></div>
+    <div class="addform">
+      <input id="context_file" type="file" accept=".md,.markdown,.txt,text/markdown,text/plain" onchange="readAiContextFile(this)">
+      <input id="context_note" type="text" maxlength="1000" placeholder="What changed? (optional)">
+      <label><input id="context_activate" type="checkbox" checked> Make this version active now</label>
+      <button onclick="saveAiContextVersion()">Save new version</button>
+    </div>
+    <p class="note">${current ? `Editing from v${esc(current.version_number)}. ` : "No version yet. "}The active version is what the AI workers use within about 30 seconds.</p>
+    <textarea id="context_content" class="context-editor" maxlength="200000" spellcheck="false" placeholder="# Client AI context\n\nAdd products, terms, pricing, scoring guidance…">${esc(detail.selected_content || "")}</textarea>
+    <p class="note" id="context_file_note">${aiContextSourceName ? `Selected file: ${esc(aiContextSourceName)}` : ""}</p>
+    <h3>Version history</h3>
+    <div class="scroll"><table><tr><th>Version</th><th>Source / note</th><th>Saved</th><th></th></tr>
+      ${versionRows || `<tr><td colspan="4" class="sub">No saved versions yet.</td></tr>`}</table></div>
+    <details class="insight"><summary>Audit details (${(detail.audit_events || []).length})</summary><ol class="context-audit">${audit || "<li>No activity yet.</li>"}</ol></details>
+  </section>`;
 }
 
 async function adminCall(payload, retried) {
@@ -1153,13 +1225,160 @@ async function openAccounts() {
 }
 function closeAccounts() { adminMode = false; adminMsg = ""; render(); }
 async function openTechnicalSetup() {
-  technicalSetupMode = true; adminData = null; adminMsg = ""; render();
+  technicalSetupMode = true; adminData = null; adminMsg = ""; aiContextOverview = null; aiContextDetail = null; aiContextMsg = ""; aiContextSourceName = ""; render();
   const { ok, j } = await adminCall({ action: "list" });
   if (ok) adminData = j; else adminMsg = j.error || t("serverError");
+  const contextRes = await adminCall({ action: "list_client_ai_contexts" });
+  if (contextRes.ok) {
+    aiContextOverview = contextRes.j;
+    const first = (aiContextOverview.clients || [])[0];
+    if (first) await fetchAiContext(first.call_center_code);
+  } else aiContextMsg = contextRes.j.error || t("serverError");
   render();
 }
-function closeTechnicalSetup() { technicalSetupMode = false; adminMsg = ""; render(); }
+function closeTechnicalSetup() { technicalSetupMode = false; adminMsg = ""; aiContextOverview = null; aiContextDetail = null; aiContextMsg = ""; render(); }
 async function refreshAdmin() { const { ok, j } = await adminCall({ action: "list" }); if (ok) adminData = j; render(); }
+
+async function fetchAiContext(call_center_code, version_id) {
+  const { ok, j } = await adminCall({ action: "get_client_ai_context", call_center_code, ...(version_id ? { version_id } : {}) });
+  if (ok) aiContextDetail = j;
+  else aiContextMsg = j.error || t("serverError");
+  return ok;
+}
+async function selectAiContext() {
+  const call_center_code = document.getElementById("context_client")?.value || "";
+  if (!call_center_code) return;
+  aiContextDetail = null; aiContextMsg = ""; aiContextSourceName = ""; render();
+  await fetchAiContext(call_center_code);
+  render();
+}
+async function previewAiContextVersion(version_id) {
+  const code = aiContextDetail?.client?.call_center_code;
+  if (!code || !version_id) return;
+  aiContextMsg = "";
+  await fetchAiContext(code, version_id);
+  render();
+}
+function readAiContextFile(input) {
+  const file = input?.files?.[0];
+  if (!file) return;
+  if (!/\.(md|markdown|txt)$/i.test(file.name)) { aiContextMsg = "Choose a Markdown (.md/.markdown) or text (.txt) file."; render(); return; }
+  if (file.size > 200000) { aiContextMsg = "That file is larger than the 200,000-character context limit."; render(); return; }
+  const reader = new FileReader();
+  reader.onload = () => {
+    const text = typeof reader.result === "string" ? reader.result : "";
+    if (text.length > 200000) { aiContextMsg = "That file is larger than the 200,000-character context limit."; render(); return; }
+    const editor = document.getElementById("context_content");
+    if (editor) editor.value = text;
+    aiContextSourceName = file.name;
+    const note = document.getElementById("context_file_note");
+    if (note) note.textContent = "Selected file: " + file.name;
+  };
+  reader.onerror = () => { aiContextMsg = "Could not read that file."; render(); };
+  reader.readAsText(file);
+}
+async function saveAiContextVersion() {
+  const call_center_code = aiContextDetail?.client?.call_center_code || document.getElementById("context_client")?.value || "";
+  const content = document.getElementById("context_content")?.value || "";
+  const change_note = (document.getElementById("context_note")?.value || "").trim();
+  const activate = !!document.getElementById("context_activate")?.checked;
+  if (!call_center_code || !content.trim()) { aiContextMsg = "Choose a client and enter context text first."; render(); return; }
+  aiContextMsg = "Saving a new immutable version…"; render();
+  const { ok, j } = await adminCall({ action: "create_client_ai_context_version", call_center_code, content, change_note, source_filename: aiContextSourceName || "dashboard edit", activate });
+  if (ok) {
+    aiContextMsg = activate ? "New version saved and activated." : "New version saved; the active version was not changed.";
+    aiContextSourceName = "";
+    await loadAiContextOverview();
+    await fetchAiContext(call_center_code, j.version_id);
+  } else aiContextMsg = j.error || t("serverError");
+  render();
+}
+async function activateAiContextVersion(version_id, version_number) {
+  const call_center_code = aiContextDetail?.client?.call_center_code;
+  if (!call_center_code || !version_id || !confirm("Activate v" + version_number + "? The AI workers will use it within about 30 seconds.")) return;
+  aiContextMsg = "Activating version…"; render();
+  const { ok, j } = await adminCall({ action: "activate_client_ai_context_version", call_center_code, version_id });
+  if (ok) {
+    aiContextMsg = "v" + version_number + " is now active.";
+    await loadAiContextOverview();
+    await fetchAiContext(call_center_code, version_id);
+  } else aiContextMsg = j.error || t("serverError");
+  render();
+}
+async function loadAiContextOverview() {
+  const { ok, j } = await adminCall({ action: "list_client_ai_contexts" });
+  if (ok) aiContextOverview = j;
+  return ok;
+}
+
+// ---- Pipeline operations (master only) -------------------------------------
+// This panel never invokes AI. It records an authenticated request and the
+// always-on backend worker later claims it, records its result, and runs normal
+// pipeline stages outside the browser request.
+function pipelineOperationsPanel() {
+  if (!pipelineOpsData) return `<div id="loading">${t("loading")}</div>`;
+  const clients = pipelineOpsData.clients || [];
+  const errors = pipelineOpsData.errors || [];
+  const operations = pipelineOpsData.operations || [];
+  const audit = pipelineOpsData.audit || [];
+  const clientRows = clients.map(c => {
+    const backlog = Number(c.uploaded_backlog || 0) + Number(c.analysis_backlog || 0);
+    return `<tr><td><b>${esc(c.call_center_code)}</b></td><td>${c.paused ? `<span class="sub">Paused</span>` : `<span class="clean">Running</span>`}</td><td>${backlog} <span class="sub">(${Number(c.uploaded_backlog || 0)} upload · ${Number(c.analysis_backlog || 0)} analysis)</span></td><td>${Number(c.error_count || 0)}</td><td>${Number(c.pending_actions || 0)}</td><td><button class="small" onclick="setPipelinePause('${esc(c.call_center_code)}',${!c.paused})">${c.paused ? "Resume" : "Pause"}</button> <button class="small" ${c.error_count ? "" : "disabled"} onclick="retryPipelineErrors('${esc(c.call_center_code)}')">Retry errors</button></td></tr>`;
+  }).join("");
+  const errorRows = errors.map(e => `<tr><td>${esc(e.call_center_code)}</td><td>${esc(e.agent_name || "—")}</td><td>${fmtTime(e.created_at)}</td><td>${esc(e.processing_note || "Unknown error")}</td><td><button class="small" onclick="reprocessPipelineRecording('${esc(e.call_center_code)}','${esc(e.id)}')">Reprocess</button></td></tr>`).join("");
+  const operationRows = operations.map(o => `<tr><td>${esc(o.call_center_code)}</td><td>${esc(o.action)}</td><td>${esc(o.status)}</td><td>${fmtTime(o.requested_at)}</td><td>${esc(o.error_message || (o.result?.affected_recordings != null ? `${o.result.affected_recordings} recording(s)` : "—"))}</td></tr>`).join("");
+  const auditRows = audit.map(a => `<tr><td>${fmtTime(a.created_at)}</td><td>${esc(a.call_center_code || "—")}</td><td>${esc(a.event)}</td><td>${esc(JSON.stringify(a.details || {}))}</td></tr>`).join("");
+  return `<div>
+    <h2>Pipeline operations</h2>
+    <p class="note">Master-only controls. Pause stops new processing for a client; in-flight work can finish. Recovery requests are queued for the backend worker and are fully audited.</p>
+    ${pipelineOpsMsg ? `<p class="note" style="color:var(--gGreen);font-weight:600">${esc(pipelineOpsMsg)}</p>` : ""}
+    <button onclick="refreshPipelineOps()">Refresh operations</button>
+    <div class="scroll"><table><tr><th>Client</th><th>State</th><th>Backlog</th><th>Errors</th><th>Queued actions</th><th>Controls</th></tr>${clientRows || `<tr><td colspan="6" class="sub">No recording clients yet.</td></tr>`}</table></div>
+    <h2>Current errors</h2><p class="note">Retry keeps completed work when safe. Reprocess clears only this recording’s transcript and analysis; it preserves CRM leads and staff edits.</p>
+    <div class="scroll"><table><tr><th>Client</th><th>Agent</th><th>Recorded</th><th>Error</th><th></th></tr>${errorRows || `<tr><td colspan="5" class="sub">No current pipeline errors.</td></tr>`}</table></div>
+    <h2>Recent actions</h2><div class="scroll"><table><tr><th>Client</th><th>Action</th><th>Status</th><th>Requested</th><th>Result</th></tr>${operationRows || `<tr><td colspan="5" class="sub">No recovery actions yet.</td></tr>`}</table></div>
+    <details class="insight"><summary>Audit trail (${audit.length})</summary><div class="scroll"><table><tr><th>Time</th><th>Client</th><th>Event</th><th>Details</th></tr>${auditRows || `<tr><td colspan="4" class="sub">No audit records yet.</td></tr>`}</table></div></details>
+  </div>`;
+}
+
+async function pipelineOpsCall(payload, retried) {
+  if (simulatorMode) return { ok:false, j:{ error:t("simulatorReadOnly") } };
+  let res;
+  try {
+    res = await fetch(PIPELINE_OPS_API, { method:"POST", headers:{ apikey:ANON, Authorization:"Bearer " + session.access_token, "content-type":"application/json" }, body:JSON.stringify(payload) });
+  } catch (e) { return { ok:false, j:{ error:t("noConn") } }; }
+  if (res.status === 401 && !retried && await refreshSession()) return pipelineOpsCall(payload, true);
+  return { ok:res.ok, j:await res.json().catch(() => ({})) };
+}
+async function refreshPipelineOps() {
+  const { ok, j } = await pipelineOpsCall({ action:"list" });
+  if (ok) { pipelineOpsData = j; pipelineOpsMsg = ""; }
+  else pipelineOpsMsg = j.error || t("serverError");
+  render();
+}
+async function openPipelineOps() {
+  technicalSetupMode = false; adminMode = false; pipelineOpsMode = true; pipelineOpsData = null; pipelineOpsMsg = ""; render();
+  await refreshPipelineOps();
+}
+function closePipelineOps() { pipelineOpsMode = false; pipelineOpsMsg = ""; render(); }
+async function setPipelinePause(code, paused) {
+  if (!confirm(`${paused ? "Pause" : "Resume"} pipeline processing for ${code}?`)) return;
+  const { ok, j } = await pipelineOpsCall({ action:"set_paused", call_center_code:code, paused });
+  pipelineOpsMsg = ok ? `${code} is now ${paused ? "paused" : "running"}.` : (j.error || t("serverError"));
+  await refreshPipelineOps();
+}
+async function retryPipelineErrors(code) {
+  if (!confirm(`Queue a safe retry for up to 20 current errors for ${code}?`)) return;
+  const { ok, j } = await pipelineOpsCall({ action:"retry_errors", call_center_code:code });
+  pipelineOpsMsg = ok ? "Retry request queued for the backend worker." : (j.error || t("serverError"));
+  await refreshPipelineOps();
+}
+async function reprocessPipelineRecording(code, id) {
+  if (!confirm("Queue a full reprocess for this recording? It will replace its transcript and analysis after the worker runs.")) return;
+  const { ok, j } = await pipelineOpsCall({ action:"reprocess_recording", call_center_code:code, recording_id:id });
+  pipelineOpsMsg = ok ? "Reprocess request queued for the backend worker." : (j.error || t("serverError"));
+  await refreshPipelineOps();
+}
 
 // ---- WhatsApp Inbox setup (master only) -------------------------------------
 // This uses the same authenticated master session as the dashboard. WhatsApp-only
