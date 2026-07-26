@@ -586,12 +586,66 @@ function loginScreen(err) {
     <button onclick="signIn()">${t("loginBtn")}</button>
     <div class="err">${err ? esc(err) : ""}</div>
     <div class="forgot"><a onclick="showForgot()">${t("forgotLink")}</a></div>
+    <div class="forgot"><a onclick="phoneLoginScreen()">Working in WhatsApp Inbox? Sign in with your phone</a></div>
     <div class="lang">
       <a onclick="setLang('ar')">العربية</a> · <a onclick="setLang('en')">English</a>
     </div>
   </div>`;
   const el = document.getElementById("email");
   if (el) el.focus();
+}
+
+// Inbox employees do not need a password. Their phone number receives a
+// short-lived code from Supabase Auth; server-side role checks still limit
+// the resulting session to the Inbox.
+function phoneLoginScreen(err, phone = "") {
+  applyLang();
+  app.innerHTML = `<div class="login">
+    <div class="brand-box">${LOGO}<span>Shareek</span></div>
+    <p>WhatsApp Inbox employee sign-in</p>
+    <input id="otp_phone" type="tel" inputmode="tel" autocomplete="tel" dir="ltr" placeholder="Phone number, e.g. +964…"
+      value="${esc(phone)}" onkeydown="if(event.key==='Enter')sendPhoneCode()">
+    <button onclick="sendPhoneCode()">Send code</button>
+    <div class="err">${err ? esc(err) : ""}</div>
+    <div class="forgot"><a onclick="loginScreen()">← Back to password sign-in</a></div>
+    <div class="lang"><a onclick="setLang('ar')">العربية</a> · <a onclick="setLang('en')">English</a></div>
+  </div>`;
+  document.getElementById("otp_phone")?.focus();
+}
+
+function phoneCodeScreen(phone, err = "") {
+  applyLang();
+  app.innerHTML = `<div class="login">
+    <div class="brand-box">${LOGO}<span>Shareek</span></div>
+    <p>Enter the 6-digit code sent to <span dir="ltr">${esc(phone)}</span></p>
+    <input id="otp_code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" dir="ltr" placeholder="6-digit code"
+      onkeydown="if(event.key==='Enter')verifyPhoneCode('${esc(phone)}')">
+    <button onclick="verifyPhoneCode('${esc(phone)}')">Open WhatsApp Inbox</button>
+    <div class="err">${err ? esc(err) : ""}</div>
+    <div class="forgot"><a onclick="phoneLoginScreen('', '${esc(phone)}')">Use a different number</a></div>
+  </div>`;
+  document.getElementById("otp_code")?.focus();
+}
+
+function validPhone(phone) { return /^\+[1-9]\d{7,14}$/.test(phone); }
+async function sendPhoneCode() {
+  const phone = (document.getElementById("otp_phone")?.value || "").trim().replace(/[\s()-]/g, "");
+  if (!validPhone(phone)) return phoneLoginScreen("Enter the phone number with its country code, e.g. +964…", phone);
+  try {
+    const res = await fetch(SB + "/auth/v1/otp", { method:"POST", headers:{apikey:ANON,"content-type":"application/json"}, body:JSON.stringify({ phone, create_user:false }) });
+    if (!res.ok) return phoneLoginScreen("Could not send a code. Check the number and try again.", phone);
+    phoneCodeScreen(phone);
+  } catch { phoneLoginScreen(t("noConn"), phone); }
+}
+async function verifyPhoneCode(phone) {
+  const token = (document.getElementById("otp_code")?.value || "").trim();
+  if (!/^\d{6}$/.test(token)) return phoneCodeScreen(phone, "Enter the 6-digit code.");
+  try {
+    const res = await fetch(SB + "/auth/v1/verify", { method:"POST", headers:{apikey:ANON,"content-type":"application/json"}, body:JSON.stringify({ type:"sms", phone, token }) });
+    if (!res.ok) return phoneCodeScreen(phone, "That code is incorrect or has expired.");
+    const s = await res.json(); session = { access_token:s.access_token, refresh_token:s.refresh_token };
+    await load(true);
+  } catch { phoneCodeScreen(phone, t("noConn")); }
 }
 
 function showSimulator() {
@@ -812,7 +866,10 @@ async function load(fromLogin, retried) {
   data = await res.json();
   // The master account always lands in English after signing in. They can still use
   // the visible language buttons for the current session; other roles remain Arabic-first.
-  if (fromLogin && data.role === "master") lang = "en";
+    if (fromLogin && data.role === "master") lang = "en";
+    // Passwordless Inbox accounts never enter the master dashboard. The
+    // standalone Inbox re-verifies this session against the server.
+    if (fromLogin && data.role === "inbox") return openInboxFromLogin();
   if (fromLogin && data.role === "ceo") {
     analyticsMode = true;
     analyticsTab = "employees";
@@ -825,6 +882,12 @@ async function load(fromLogin, retried) {
   }
   startTimer();
   render();
+}
+
+function openInboxFromLogin() {
+  if (!session?.access_token) return loginScreen();
+  const handoff = encodeURIComponent(JSON.stringify(session));
+  location.replace("whatsapp-inbox.html#shareek_session=" + handoff);
 }
 
 // Keep the existing refresh request exactly as it is, while making the button
@@ -1472,10 +1535,11 @@ function whatsAppSetupPanel() {
       ${channels.map(c => `<tr><td>${esc(c.call_center_code)}</td><td>${esc(c.display_phone_number || c.phone_number_id)}</td><td>${esc(c.display_name || "—")}</td><td>${esc(c.first_response_sla_minutes)} min</td></tr>`).join("") || `<tr><td colspan="4" class="sub">No numbers connected yet.</td></tr>`}</table></div>
     <h2>3. Add Inbox user</h2>
     <div class="addform"><select id="wa_user_client"><option value="">Choose Inbox client</option>${options}</select>
-      <input id="wa_user_email" type="email" placeholder="User email"><input id="wa_user_password" type="text" placeholder="Temporary password (6+ characters)">
+      <input id="wa_user_phone" type="tel" inputmode="tel" placeholder="Employee phone, e.g. +964…">
       <select id="wa_user_role"><option value="agent">Agent</option><option value="manager">Manager</option></select><button onclick="addWhatsAppUser()">Add Inbox user</button></div>
-    <div class="scroll"><table><tr><th>Email</th><th>Client</th><th>Role</th><th>Status</th></tr>
-      ${users.map(u => `<tr><td>${esc(u.email)}</td><td>${esc(u.call_center_code)}</td><td>${esc(u.role)}</td><td>${u.active ? "Active" : "Inactive"}</td></tr>`).join("") || `<tr><td colspan="4" class="sub">No Inbox users yet.</td></tr>`}</table></div>
+    <p class="note">Employees sign in using a one-time code sent to this phone. No password is created.</p>
+    <div class="scroll"><table><tr><th>Phone</th><th>Client</th><th>Role</th><th>Status</th></tr>
+      ${users.map(u => `<tr><td dir="ltr">${esc(u.phone || u.email)}</td><td>${esc(u.call_center_code)}</td><td>${esc(u.role)}</td><td>${u.active ? "Active" : "Inactive"}</td></tr>`).join("") || `<tr><td colspan="4" class="sub">No Inbox users yet.</td></tr>`}</table></div>
   </div>`;
 }
 async function openWhatsAppSetup() {
@@ -1513,12 +1577,11 @@ async function addWhatsAppChannel() {
 }
 async function addWhatsAppUser() {
   const call_center_code = document.getElementById("wa_user_client")?.value || "";
-  const email = (document.getElementById("wa_user_email")?.value || "").trim();
-  const password = document.getElementById("wa_user_password")?.value || "";
+  const phone = (document.getElementById("wa_user_phone")?.value || "").trim().replace(/[\s()-]/g, "");
   const role = document.getElementById("wa_user_role")?.value || "agent";
-  if (!call_center_code || !email || password.length < 6) return;
+  if (!call_center_code || !validPhone(phone)) { whatsappSetupMsg = "Enter the employee phone number with its country code, e.g. +964…"; render(); return; }
   whatsappSetupMsg = t("saving"); render();
-  const { ok, j } = await adminCall({ action:"add_whatsapp_user", call_center_code, email, password, role });
+  const { ok, j } = await adminCall({ action:"add_whatsapp_user", call_center_code, phone, role });
   await refreshWhatsAppSetup(ok ? "Inbox user added." : (j.error || t("serverError")));
 }
 
