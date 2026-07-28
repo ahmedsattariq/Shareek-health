@@ -261,7 +261,7 @@ const T = {
     never:"never", ago:"ago", lastSeen:"last seen", emptyPhones:"No phones in this client yet.",
     recordingsTitle:"Recent recordings", recordingsNote:"New calls appear after upload. Audio links are private and refresh for one hour.", noRecordings:"No recordings yet.", colWhen:"When", colAgent:"Agent", colLength:"Length", colListen:"Listen",
     note:"<b>Green</b> = recording & healthy. <b>Red</b> = follow up: <i>Offline</i> (phone off / no internet), <i>Went dark</i> (no check-in for a day — likely off or app removed), <i>Not recording</i> (Shizuku off), low <i>battery</i> (&lt;15% unplugged) or nearly-full <i>storage</i> (&lt;300 MB). <b>Amber</b> = no employee is signed in. 🔌 = charging. Grey = paused.",
-    accounts:"Accounts", technicalSetup:"Technical setup", pipelineOps:"Pipeline operations", more:"More", whatsappSetup:"WhatsApp setup", whatsappInbox:"WhatsApp Inbox", leads:"Leads", backToHealth:"← Back to dashboard", accountsTitle:"Dashboard logins",
+    accounts:"Accounts", technicalSetup:"Technical setup", pipelineOps:"Pipeline operations", more:"More", whatsappSetup:"WhatsApp setup", whatsappInbox:"WhatsApp Inbox", calls:"Calls", leads:"Leads", backToHealth:"← Back to dashboard", accountsTitle:"Dashboard logins",
     employeesMenu:"Employees", employeesTitle:"Center employees", employeesNote:"Employees use their name and a 4-digit PIN to clock in on shared Shareek phones.",
     addEmployee:"Add employee", employeeName:"employee name", employeePin:"4-digit PIN", employeeClient:"Assign to client", noEmployees:"No employees added yet.",
     renameEmployee:"Rename", resetPin:"Reset PIN", deactivateEmployee:"Deactivate", activateEmployee:"Activate",
@@ -342,7 +342,7 @@ const T = {
     never:"أبداً", ago:"منذ", lastSeen:"آخر ظهور", emptyPhones:"لا توجد أجهزة في هذا المركز بعد.",
     recordingsTitle:"التسجيلات الأخيرة", recordingsNote:"تظهر المكالمات الجديدة بعد رفعها. روابط الاستماع خاصة وتتجدد لمدة ساعة.", noRecordings:"لا توجد تسجيلات بعد.", colWhen:"الوقت", colAgent:"الموظف", colLength:"المدة", colListen:"استماع",
     note:"<b>أخضر</b> = يسجّل وسليم. <b>أحمر</b> = يحتاج متابعة: <i>غير متصل</i> (الجهاز مطفأ أو لا إنترنت)، <i>انقطع</i> (لا اتصال منذ يوم — غالباً مطفأ أو حُذف التطبيق)، <i>لا يسجّل</i> (Shizuku متوقف)، <i>بطارية</i> منخفضة (أقل من 15% وغير موصول) أو <i>تخزين</i> شبه ممتلئ (أقل من 300 ميغابايت). <b>برتقالي</b> = لا يوجد موظف مسجّل الدخول. 🔌 = يشحن. رمادي = موقوف.",
-    accounts:"الحسابات", technicalSetup:"الإعدادات التقنية", pipelineOps:"عمليات المعالجة", more:"المزيد", whatsappSetup:"إعداد واتساب", whatsappInbox:"صندوق واتساب", leads:"العملاء المحتملون", backToHealth:"← رجوع للوحة", accountsTitle:"حسابات الدخول",
+    accounts:"الحسابات", technicalSetup:"الإعدادات التقنية", pipelineOps:"عمليات المعالجة", more:"المزيد", whatsappSetup:"إعداد واتساب", whatsappInbox:"صندوق واتساب", calls:"المكالمات", leads:"العملاء المحتملون", backToHealth:"← رجوع للوحة", accountsTitle:"حسابات الدخول",
     employeesMenu:"الموظفون", employeesTitle:"موظفو المركز", employeesNote:"يستخدم الموظف اسمه ورمزاً من ٤ أرقام لتسجيل بداية دوامه على هواتف شريك المشتركة.",
     addEmployee:"إضافة موظف", employeeName:"اسم الموظف", employeePin:"رمز من ٤ أرقام", employeeClient:"تعيين للمركز", noEmployees:"لم تتم إضافة الموظفين بعد.",
     renameEmployee:"تغيير الاسم", resetPin:"إعادة تعيين الرمز", deactivateEmployee:"إيقاف", activateEmployee:"تفعيل",
@@ -944,6 +944,7 @@ function render() {
       <div class="menu-divider"></div>` : ""}
     ${isMaster && !simulatorMode ? `<button onclick="openWhatsAppSetup()">${t("whatsappSetup")}</button>` : ""}
     ${canUseInbox && !simulatorMode ? `<button onclick="openWhatsAppInbox()">${t("whatsappInbox")}</button>` : ""}
+    ${canUseInbox && !simulatorMode ? `<button onclick="openWhatsAppCalls()">${t("calls")}</button>` : ""}
     ${canUseLeads && !simulatorMode ? `<button onclick="openLeads()">${t("leads")}</button>` : ""}
     ${isMaster && !simulatorMode ? `<div class="menu-divider"></div><button onclick="showSimulator()">${t("simulatorMenu")}</button>` : ""}`;
   const moreMenu = moreItems.trim() ? `<details class="header-menu"><summary>${t("more")}</summary><div class="menu-popover">${moreItems}</div></details>` : "";
@@ -1086,6 +1087,10 @@ function selectClient(cc) { selectedCode = cc; render(); }
 function openWhatsAppInbox() {
   const desktopDashboard = /Shareek-(Health-)?Dashboard\.html$/i.test(decodeURIComponent(location.pathname));
   openAuthenticatedModule(desktopDashboard ? "Shareek-WhatsApp-Inbox.html" : "whatsapp-inbox.html");
+}
+function openWhatsAppCalls() {
+  const desktopDashboard = /Shareek-(Health-)?Dashboard\.html$/i.test(decodeURIComponent(location.pathname));
+  openAuthenticatedModule(desktopDashboard ? "Shareek-Calls.html" : "whatsapp-calls.html");
 }
 function openLeads() {
   const desktopDashboard = /Shareek-(Health-)?Dashboard\.html$/i.test(decodeURIComponent(location.pathname));
