@@ -238,7 +238,7 @@ const T = {
     emailLabel:"Email", passwordLabel:"Password", loginBtn:"Sign in",
     simulatorTitle:"Account simulator", simulatorHint:"Choose a role to see its real dashboard layout using the live data currently loaded. Changes are disabled.",
     simulatorMaster:"Master", simulatorMasterDesc:"Owner view across every client, including account management and CEO analytics.",
-    simulatorCeo:"CEO", simulatorCeoDesc:"Company view that opens on employee ratings, with Analytics and phone health for one company.",
+    simulatorCeo:"CEO", simulatorCeoDesc:"Company view that opens on employee ratings in Analytics.",
     simulatorAdmin:"Admin", simulatorAdminDesc:"Field-team view across every client, with safe supervisor and client management.",
     simulatorSupervisor:"Supervisor", simulatorSupervisorDesc:"Client view limited to one call center and its phones.",
     simulatorOpen:"Open preview", simulatorBack:"← Back to my dashboard", simulatorBanner:"Simulation · live data · changes disabled",
@@ -1006,6 +1006,13 @@ function render() {
     return;
   }
 
+  // Phone Health is paused across dashboard roles. Its implementation and API
+  // remain intact so it can be restored without rebuilding the feature; see
+  // docs/FUTURE_PHONE_HEALTH.md. Do not render its client/phone cards here.
+  app.innerHTML = header + `<div class="wrap"><div class="empty">${lang === "ar" ? "هذه المساحة قيد التجهيز. استخدم التحليلات أو أدوات العمل المتاحة." : "This workspace is being prepared. Use Analytics or one of the available work tools."}</div></div>`;
+  return;
+
+  /*
   if (!clients.length) {
     app.innerHTML = header + `<div class="wrap"><div class="empty">${t("noClients")}</div></div>`;
     return;
@@ -1049,6 +1056,7 @@ function render() {
   }
 
   app.innerHTML = header + body;
+  */
 }
 
 function clientSection(c) {
