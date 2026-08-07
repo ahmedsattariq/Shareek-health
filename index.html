@@ -1051,7 +1051,9 @@ function openCommandCenter() {
     access_token: session.access_token,
     refresh_token: session.refresh_token,
   }));
-  location.assign(`command-center.html#shareek_session=${handoff}`);
+  // A cache-busting query ensures an installed dashboard never reuses the
+  // old Command Center shell that lacked this single-sign-in handoff.
+  location.assign(`command-center.html?v=${Date.now()}#shareek_session=${handoff}`);
 }
 // The operational modules are separate files, so pass the already-authenticated
 // Supabase session in the URL fragment. Fragments never go to the server and the
