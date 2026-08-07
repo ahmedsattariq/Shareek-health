@@ -1043,7 +1043,15 @@ function openLeads() {
   openAuthenticatedModule(desktopDashboard ? "Shareek-Leads.html" : "leads.html");
 }
 function openCommandCenter() {
-  openAuthenticatedModule("command-center.html");
+  // This stays in the same tab: some mobile browsers discard an URL fragment
+  // when opening a protected page in a new tab. The Command Center removes the
+  // short-lived handoff fragment immediately after reading it.
+  if (!session?.access_token) return loginScreen();
+  const handoff = encodeURIComponent(JSON.stringify({
+    access_token: session.access_token,
+    refresh_token: session.refresh_token,
+  }));
+  location.assign(`command-center.html#shareek_session=${handoff}`);
 }
 // The operational modules are separate files, so pass the already-authenticated
 // Supabase session in the URL fragment. Fragments never go to the server and the
