@@ -464,7 +464,7 @@ let pipelineOpsData = null;
 let pipelineOpsMsg = "";
 let dashboardRefreshing = false;
 let pipelineOpsRefreshing = false;
-let whatsappSetupMode = false; // Master-only WhatsApp Inbox onboarding
+let whatsappSetupMode = false; // Master/Admin WhatsApp Inbox onboarding
 let whatsappSetupData = null;  // { clients, channels, users }
 let whatsappSetupMsg = "";
 let analyticsMode = false;  // Analytics view: master across all companies, CEO for one company
@@ -586,66 +586,12 @@ function loginScreen(err) {
     <button onclick="signIn()">${t("loginBtn")}</button>
     <div class="err">${err ? esc(err) : ""}</div>
     <div class="forgot"><a onclick="showForgot()">${t("forgotLink")}</a></div>
-    <div class="forgot"><a onclick="phoneLoginScreen()">Working in WhatsApp Inbox? Sign in with your phone</a></div>
     <div class="lang">
       <a onclick="setLang('ar')">العربية</a> · <a onclick="setLang('en')">English</a>
     </div>
   </div>`;
   const el = document.getElementById("email");
   if (el) el.focus();
-}
-
-// Inbox employees do not need a password. Their phone number receives a
-// short-lived code from Supabase Auth; server-side role checks still limit
-// the resulting session to the Inbox.
-function phoneLoginScreen(err, phone = "") {
-  applyLang();
-  app.innerHTML = `<div class="login">
-    <div class="brand-box">${LOGO}<span>Shareek</span></div>
-    <p>WhatsApp Inbox employee sign-in</p>
-    <input id="otp_phone" type="tel" inputmode="tel" autocomplete="tel" dir="ltr" placeholder="Phone number, e.g. +964…"
-      value="${esc(phone)}" onkeydown="if(event.key==='Enter')sendPhoneCode()">
-    <button onclick="sendPhoneCode()">Send code</button>
-    <div class="err">${err ? esc(err) : ""}</div>
-    <div class="forgot"><a onclick="loginScreen()">← Back to password sign-in</a></div>
-    <div class="lang"><a onclick="setLang('ar')">العربية</a> · <a onclick="setLang('en')">English</a></div>
-  </div>`;
-  document.getElementById("otp_phone")?.focus();
-}
-
-function phoneCodeScreen(phone, err = "") {
-  applyLang();
-  app.innerHTML = `<div class="login">
-    <div class="brand-box">${LOGO}<span>Shareek</span></div>
-    <p>Enter the 6-digit code sent to <span dir="ltr">${esc(phone)}</span></p>
-    <input id="otp_code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" dir="ltr" placeholder="6-digit code"
-      onkeydown="if(event.key==='Enter')verifyPhoneCode('${esc(phone)}')">
-    <button onclick="verifyPhoneCode('${esc(phone)}')">Open WhatsApp Inbox</button>
-    <div class="err">${err ? esc(err) : ""}</div>
-    <div class="forgot"><a onclick="phoneLoginScreen('', '${esc(phone)}')">Use a different number</a></div>
-  </div>`;
-  document.getElementById("otp_code")?.focus();
-}
-
-function validPhone(phone) { return /^\+[1-9]\d{7,14}$/.test(phone); }
-async function sendPhoneCode() {
-  const phone = (document.getElementById("otp_phone")?.value || "").trim().replace(/[\s()-]/g, "");
-  if (!validPhone(phone)) return phoneLoginScreen("Enter the phone number with its country code, e.g. +964…", phone);
-  try {
-    const res = await fetch(SB + "/auth/v1/otp", { method:"POST", headers:{apikey:ANON,"content-type":"application/json"}, body:JSON.stringify({ phone, create_user:false }) });
-    if (!res.ok) return phoneLoginScreen("Could not send a code. Check the number and try again.", phone);
-    phoneCodeScreen(phone);
-  } catch { phoneLoginScreen(t("noConn"), phone); }
-}
-async function verifyPhoneCode(phone) {
-  const token = (document.getElementById("otp_code")?.value || "").trim();
-  if (!/^\d{6}$/.test(token)) return phoneCodeScreen(phone, "Enter the 6-digit code.");
-  try {
-    const res = await fetch(SB + "/auth/v1/verify", { method:"POST", headers:{apikey:ANON,"content-type":"application/json"}, body:JSON.stringify({ type:"sms", phone, token }) });
-    if (!res.ok) return phoneCodeScreen(phone, "That code is incorrect or has expired.");
-    const s = await res.json(); session = { access_token:s.access_token, refresh_token:s.refresh_token };
-    await load(true);
-  } catch { phoneCodeScreen(phone, t("noConn")); }
 }
 
 function showSimulator() {
@@ -935,14 +881,14 @@ function render() {
   </div>` : "";
   // Keep the day-to-day master work visible. Configuration and occasional tools
   // live behind one compact menu so the header stays easy to scan.
-  const primaryNav = `${isMaster && !simulatorMode ? `<button class="ghost" onclick="openPipelineOps()">${t("pipelineOps")}</button>` : ""}
+  const primaryNav = `${isMaster && !simulatorMode ? `<button class="ghost" onclick="openPipelineOps()">${t("pipelineOps")}</button><button class="ghost" onclick="openCommandCenter()">Command Center</button>` : ""}
     ${canAnalytics ? `<button class="ghost" onclick="openAnalytics()">${t("analytics")}</button>` : ""}
     ${(isSupervisor || canManage) ? `<button class="ghost" onclick="openEmployees()">${t("employeesMenu")}</button>` : ""}
     ${!isMaster && canManage ? `<button class="ghost" onclick="openAccounts()">${t("accounts")}</button>` : ""}`;
   const moreItems = `${isMaster && !simulatorMode ? `<button onclick="openAccounts()">${t("accounts")}</button>
       <button onclick="openTechnicalSetup()">${t("technicalSetup")}</button>
       <div class="menu-divider"></div>` : ""}
-    ${isMaster && !simulatorMode ? `<button onclick="openWhatsAppSetup()">${t("whatsappSetup")}</button>` : ""}
+    ${canManage && !simulatorMode ? `<button onclick="openWhatsAppSetup()">${t("whatsappSetup")}</button>` : ""}
     ${canUseInbox && !simulatorMode ? `<button onclick="openWhatsAppInbox()">${t("whatsappInbox")}</button>` : ""}
     ${canUseInbox && !simulatorMode ? `<button onclick="openWhatsAppCalls()">${t("calls")}</button>` : ""}
     ${canUseLeads && !simulatorMode ? `<button onclick="openLeads()">${t("leads")}</button>` : ""}
@@ -963,7 +909,7 @@ function render() {
       ? `<button class="ghost" onclick="closeTechnicalSetup()">${t("backToHealth")}</button>`
       : isMaster && pipelineOpsMode
       ? `<button class="ghost" onclick="closePipelineOps()">${t("backToHealth")}</button>`
-      : isMaster && whatsappSetupMode
+      : canManage && whatsappSetupMode
       ? `<button class="ghost" onclick="closeWhatsAppSetup()">${t("backToHealth")}</button>`
       : canAnalytics && analyticsMode
       ? `<button class="ghost" onclick="closeAnalytics()">${t("backToHealth")}</button>
@@ -987,7 +933,7 @@ function render() {
     return;
   }
 
-  if (whatsappSetupMode && isMaster) {
+  if (whatsappSetupMode && canManage) {
     app.innerHTML = header + `<div class="wrap">${whatsAppSetupPanel()}</div>`;
     return;
   }
@@ -1095,6 +1041,9 @@ function openWhatsAppCalls() {
 function openLeads() {
   const desktopDashboard = /Shareek-(Health-)?Dashboard\.html$/i.test(decodeURIComponent(location.pathname));
   openAuthenticatedModule(desktopDashboard ? "Shareek-Leads.html" : "leads.html");
+}
+function openCommandCenter() {
+  openAuthenticatedModule("command-center.html");
 }
 // The operational modules are separate files, so pass the already-authenticated
 // Supabase session in the URL fragment. Fragments never go to the server and the
@@ -1519,8 +1468,8 @@ async function reprocessPipelineRecording(code, id) {
   await refreshPipelineOps();
 }
 
-// ---- WhatsApp Inbox setup (master only) -------------------------------------
-// This uses the same authenticated master session as the dashboard. WhatsApp-only
+// ---- WhatsApp Inbox setup (master + admin) ----------------------------------
+// This uses the same authenticated management session as the dashboard. WhatsApp-only
 // clients and users remain separate from recording-dashboard clients and logins.
 function whatsAppSetupPanel() {
   if (!whatsappSetupData) return `<div id="loading">${t("loading")}</div>`;
@@ -1548,11 +1497,11 @@ function whatsAppSetupPanel() {
       ${channels.map(c => `<tr><td>${esc(c.call_center_code)}</td><td>${esc(c.display_phone_number || c.phone_number_id)}</td><td>${esc(c.display_name || "—")}</td><td>${esc(c.first_response_sla_minutes)} min</td></tr>`).join("") || `<tr><td colspan="4" class="sub">No numbers connected yet.</td></tr>`}</table></div>
     <h2>3. Add Inbox user</h2>
     <div class="addform"><select id="wa_user_client"><option value="">Choose Inbox client</option>${options}</select>
-      <input id="wa_user_phone" type="tel" inputmode="tel" placeholder="Employee phone, e.g. +964…">
-      <select id="wa_user_role"><option value="agent">Agent</option><option value="manager">Manager</option></select><button onclick="addWhatsAppUser()">Add Inbox user</button></div>
-    <p class="note">Employees sign in using a one-time code sent to this phone. No password is created.</p>
-    <div class="scroll"><table><tr><th>Phone</th><th>Client</th><th>Role</th><th>Status</th></tr>
-      ${users.map(u => `<tr><td dir="ltr">${esc(u.phone || u.email)}</td><td>${esc(u.call_center_code)}</td><td>${esc(u.role)}</td><td>${u.active ? "Active" : "Inactive"}</td></tr>`).join("") || `<tr><td colspan="4" class="sub">No Inbox users yet.</td></tr>`}</table></div>
+      <input id="wa_user_email" type="email" autocomplete="off" placeholder="Employee work email">
+      <select id="wa_user_role"><option value="agent">Agent</option><option value="manager">Manager</option></select><button onclick="addWhatsAppUser()">Send invitation</button></div>
+    <p class="note">Shareek emails a one-time password-setup code to the employee. They choose their own password; it is never shown to you.</p>
+    <div class="scroll"><table><tr><th>Email</th><th>Client</th><th>Role</th><th>Status</th></tr>
+      ${users.map(u => `<tr><td dir="ltr">${esc(u.email || "—")}</td><td>${esc(u.call_center_code)}</td><td>${esc(u.role)}</td><td>${u.active ? "Active" : "Inactive"}</td></tr>`).join("") || `<tr><td colspan="4" class="sub">No Inbox users yet.</td></tr>`}</table></div>
   </div>`;
 }
 async function openWhatsAppSetup() {
@@ -1590,12 +1539,12 @@ async function addWhatsAppChannel() {
 }
 async function addWhatsAppUser() {
   const call_center_code = document.getElementById("wa_user_client")?.value || "";
-  const phone = (document.getElementById("wa_user_phone")?.value || "").trim().replace(/[\s()-]/g, "");
+  const email = (document.getElementById("wa_user_email")?.value || "").trim().toLowerCase();
   const role = document.getElementById("wa_user_role")?.value || "agent";
-  if (!call_center_code || !validPhone(phone)) { whatsappSetupMsg = "Enter the employee phone number with its country code, e.g. +964…"; render(); return; }
+  if (!call_center_code || !/^\S+@\S+\.\S+$/.test(email)) { whatsappSetupMsg = "Enter the employee’s work email."; render(); return; }
   whatsappSetupMsg = t("saving"); render();
-  const { ok, j } = await adminCall({ action:"add_whatsapp_user", call_center_code, phone, role });
-  await refreshWhatsAppSetup(ok ? "Inbox user added." : (j.error || t("serverError")));
+  const { ok, j } = await adminCall({ action:"add_whatsapp_user", call_center_code, email, role });
+  await refreshWhatsAppSetup(ok ? "Invitation email sent." : (j.error || t("serverError")));
 }
 
 // Masters and admins see every client; CEOs and supervisors are tied to one client.
