@@ -467,6 +467,9 @@ let pipelineOpsRefreshing = false;
 let whatsappSetupMode = false; // Master/Admin WhatsApp Inbox onboarding
 let whatsappSetupData = null;  // { clients, channels, users }
 let whatsappSetupMsg = "";
+// Kept in browser memory only long enough for the Meta admin to complete webhook setup.
+// Never put Meta credentials or this one-time verification value in localStorage.
+let metaConnectionResult = null;
 let analyticsMode = false;  // Analytics view: master across all companies, CEO for one company
 let analyticsData = null;   // CEO analytics payload (mock for now)
 let analyticsMsg = "";      // last error/feedback message
@@ -1486,8 +1489,24 @@ function whatsAppSetupPanel() {
   const clients = whatsappSetupData.clients || [];
   const channels = whatsappSetupData.channels || [];
   const users = whatsappSetupData.users || [];
+  const isMaster = data?.role === "master";
   const options = clients.filter(c => c.active).map(c =>
     `<option value="${esc(c.call_center_code)}">${esc(c.display_name || c.call_center_code)} (${esc(c.call_center_code)})</option>`).join("");
+  const metaConnection = isMaster ? `<section class="card">
+    <h2>4. Connect Meta API</h2>
+    <p class="note">Only the Shareek master can save these credentials. The access token and App Secret are encrypted on the server and are never shown again.</p>
+    <div class="addform"><select id="meta_client"><option value="">Choose Inbox client</option>${options}</select>
+      <input id="meta_connection_name" placeholder="Connection name, e.g. Lamac Meta API">
+      <input id="meta_access_token" type="password" autocomplete="off" placeholder="Meta system-user access token">
+      <input id="meta_app_secret" type="password" autocomplete="off" placeholder="Meta App Secret">
+      <input id="meta_app_id" autocomplete="off" placeholder="Meta App ID">
+      <input id="meta_graph_api_version" autocomplete="off" placeholder="Graph API version, e.g. vXX.X">
+      <button onclick="configureMetaConnection()">Save secure connection</button></div>
+    ${metaConnectionResult ? `<div class="insight"><p><strong>Give these to the Meta admin now:</strong></p>
+      <p>Webhook URL: <code>${esc(metaConnectionResult.webhook_url)}</code></p>
+      <p>Verification token: <code>${esc(metaConnectionResult.verifyToken)}</code></p>
+      <p class="note">In Meta for Developers, add this webhook URL and token, verify it, then subscribe to <code>messages</code>. Leave this page or refresh it afterwards to clear the token from this browser.</p></div>` : ""}
+  </section>` : "";
   return `<div>
     <h2>WhatsApp Inbox setup</h2>
     <p class="note">Create WhatsApp-only clients, connect their number, and give their team access. These accounts do not appear in the call-recording dashboard.</p>
@@ -1512,7 +1531,7 @@ function whatsAppSetupPanel() {
     <p class="note">Shareek emails a one-time password-setup code to the employee. They choose their own password; it is never shown to you.</p>
     <div class="scroll"><table><tr><th>Email</th><th>Client</th><th>Role</th><th>Status</th></tr>
       ${users.map(u => `<tr><td dir="ltr">${esc(u.email || "—")}</td><td>${esc(u.call_center_code)}</td><td>${esc(u.role)}</td><td>${u.active ? "Active" : "Inactive"}</td></tr>`).join("") || `<tr><td colspan="4" class="sub">No Inbox users yet.</td></tr>`}</table></div>
-  </div>`;
+  </div>${metaConnection}`;
 }
 async function openWhatsAppSetup() {
   technicalSetupMode = false; whatsappSetupMode = true; whatsappSetupData = null; whatsappSetupMsg = ""; render();
@@ -1520,7 +1539,7 @@ async function openWhatsAppSetup() {
   if (ok) whatsappSetupData = j; else whatsappSetupMsg = j.error || t("serverError");
   render();
 }
-function closeWhatsAppSetup() { whatsappSetupMode = false; whatsappSetupMsg = ""; render(); }
+function closeWhatsAppSetup() { whatsappSetupMode = false; whatsappSetupMsg = ""; metaConnectionResult = null; render(); }
 async function refreshWhatsAppSetup(message) {
   const { ok, j } = await adminCall({ action: "list_whatsapp" });
   if (ok) whatsappSetupData = j;
@@ -1555,6 +1574,36 @@ async function addWhatsAppUser() {
   whatsappSetupMsg = t("saving"); render();
   const { ok, j } = await adminCall({ action:"add_whatsapp_user", call_center_code, email, role });
   await refreshWhatsAppSetup(ok ? "Invitation email sent." : (j.error || t("serverError")));
+}
+function newWebhookVerifyToken() {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
+}
+async function configureMetaConnection() {
+  const call_center_code = document.getElementById("meta_client")?.value || "";
+  const connection_name = (document.getElementById("meta_connection_name")?.value || "").trim();
+  const access_token = (document.getElementById("meta_access_token")?.value || "").trim();
+  const app_secret = (document.getElementById("meta_app_secret")?.value || "").trim();
+  const meta_app_id = (document.getElementById("meta_app_id")?.value || "").trim();
+  const graph_api_version = (document.getElementById("meta_graph_api_version")?.value || "").trim();
+  if (!call_center_code || !connection_name || !access_token || !app_secret || !graph_api_version) {
+    whatsappSetupMsg = "Choose the client and enter the connection name, access token, App Secret, and Graph API version.";
+    render();
+    return;
+  }
+  const webhook_verify_token = newWebhookVerifyToken();
+  whatsappSetupMsg = t("saving");
+  metaConnectionResult = null;
+  render();
+  const { ok, j } = await adminCall({ action:"configure_meta_connection", call_center_code, connection_name, access_token, app_secret, meta_app_id, graph_api_version, webhook_verify_token });
+  if (ok && j.webhook_url) {
+    metaConnectionResult = { webhook_url: j.webhook_url, verifyToken: webhook_verify_token };
+    await refreshWhatsAppSetup("Secure Meta connection saved. Complete the webhook setup below before leaving this page.");
+  } else {
+    whatsappSetupMsg = j.error || t("serverError");
+    render();
+  }
 }
 
 // Masters and admins see every client; CEOs and supervisors are tied to one client.
