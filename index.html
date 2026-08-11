@@ -235,7 +235,7 @@ const T = {
   en: {
     title:"Dashboard", subtitle:"Baghdad time · updated", refresh:"Refresh", logout:"Log out",
     loginTitle:"Dashboard", loginHint:"Sign in to continue",
-    emailLabel:"Email", passwordLabel:"Password", loginBtn:"Sign in",
+    emailLabel:"Email", passwordLabel:"Password", loginBtn:"Sign in", whatsappLogin:"WhatsApp employee login",
     simulatorTitle:"Account simulator", simulatorHint:"Choose a role to see its real dashboard layout using the live data currently loaded. Changes are disabled.",
     simulatorMaster:"Master", simulatorMasterDesc:"Owner view across every client, including account management and CEO analytics.",
     simulatorCeo:"CEO", simulatorCeoDesc:"Company view that opens on employee ratings in Analytics.",
@@ -316,7 +316,7 @@ const T = {
   ar: {
     title:"لوحة المعلومات", subtitle:"توقيت بغداد · آخر تحديث", refresh:"تحديث", logout:"خروج",
     loginTitle:"لوحة المعلومات", loginHint:"سجّل الدخول للمتابعة",
-    emailLabel:"البريد الإلكتروني", passwordLabel:"كلمة المرور", loginBtn:"دخول",
+    emailLabel:"البريد الإلكتروني", passwordLabel:"كلمة المرور", loginBtn:"دخول", whatsappLogin:"دخول موظفي واتساب",
     simulatorTitle:"محاكي الحسابات", simulatorHint:"اختر نوع الحساب لرؤية واجهته الفعلية باستخدام البيانات الحقيقية المحمّلة الآن. التغييرات معطّلة.",
     simulatorMaster:"المدير", simulatorMasterDesc:"عرض المالك لكل المراكز، ويشمل إدارة الحسابات وتحليلات المدير التنفيذي.",
     simulatorCeo:"المدير التنفيذي", simulatorCeoDesc:"عرض الشركة الذي يبدأ بتقييمات الموظفين، مع التحليلات وصحة الأجهزة لشركة واحدة.",
@@ -589,6 +589,7 @@ function loginScreen(err) {
     <button onclick="signIn()">${t("loginBtn")}</button>
     <div class="err">${err ? esc(err) : ""}</div>
     <div class="forgot"><a onclick="showForgot()">${t("forgotLink")}</a></div>
+    <div class="forgot"><a href="whatsapp-inbox.html">${t("whatsappLogin")}</a></div>
     <div class="lang">
       <a onclick="setLang('ar')">العربية</a> · <a onclick="setLang('en')">English</a>
     </div>
