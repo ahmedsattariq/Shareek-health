@@ -235,7 +235,7 @@ const T = {
   en: {
     title:"Dashboard", subtitle:"Baghdad time · updated", refresh:"Refresh", logout:"Log out",
     loginTitle:"Dashboard", loginHint:"Sign in to continue",
-    emailLabel:"Email", passwordLabel:"Password", loginBtn:"Sign in", whatsappLogin:"WhatsApp employee login",
+    emailLabel:"you@company.com", passwordLabel:"Your password", loginBtn:"Sign in",
     simulatorTitle:"Account simulator", simulatorHint:"Choose a role to see its real dashboard layout using the live data currently loaded. Changes are disabled.",
     simulatorMaster:"Master", simulatorMasterDesc:"Owner view across every client, including account management and CEO analytics.",
     simulatorCeo:"CEO", simulatorCeoDesc:"Company view that opens on employee ratings in Analytics.",
@@ -248,8 +248,8 @@ const T = {
     forgotLink:"Forgot password?", forgotTitle:"Reset password", forgotHint:"We'll email you a code",
     sendCode:"Send code", backToLogin:"← Back to sign in",
     codeSent:"If that email has an account, a code is on its way. Check your inbox (and spam).",
-    resetTitle:"Enter the code from your email and a new password", codeLabel:"code from email",
-    newPwLabel:"new password (min 6)", resetSignIn:"Reset & sign in", resendLink:"Resend code",
+    resetTitle:"Enter the code from your email and a new password", codeLabel:"6-digit code",
+    newPwLabel:"New password (6+ characters)", resetSignIn:"Reset & sign in", resendLink:"Resend code",
     badResetCode:"Wrong or expired code.", pwTooShort:"Password must be at least 6 characters.",
     clients:"Clients", phonesWord:"phones", onlineWord:"recording", needAttention:"need attention",
     allGood:"all good", noClients:"No clients reporting yet.",
@@ -263,19 +263,19 @@ const T = {
     note:"<b>Green</b> = recording & healthy. <b>Red</b> = follow up: <i>Offline</i> (phone off / no internet), <i>Went dark</i> (no check-in for a day — likely off or app removed), <i>Not recording</i> (Shizuku off), low <i>battery</i> (&lt;15% unplugged) or nearly-full <i>storage</i> (&lt;300 MB). <b>Amber</b> = no employee is signed in. 🔌 = charging. Grey = paused.",
     accounts:"Accounts", technicalSetup:"Technical setup", pipelineOps:"Pipeline operations", more:"More", whatsappSetup:"WhatsApp setup", whatsappInbox:"WhatsApp Inbox", calls:"Calls", leads:"Leads", backToHealth:"← Back to dashboard", accountsTitle:"Dashboard logins",
     employeesMenu:"Employees", employeesTitle:"Center employees", employeesNote:"Employees use their name and a 4-digit PIN to clock in on shared Shareek phones.",
-    addEmployee:"Add employee", employeeName:"employee name", employeePin:"4-digit PIN", employeeClient:"Assign to client", noEmployees:"No employees added yet.",
+    addEmployee:"Add employee", employeeName:"Full name, e.g. Ahmed Ali", employeePin:"4 digits, e.g. 1234", employeeClient:"Choose client", noEmployees:"No employees added yet.",
     renameEmployee:"Rename", resetPin:"Reset PIN", deactivateEmployee:"Deactivate", activateEmployee:"Activate",
     newEmployeeName:"New name for", newEmployeePin:"New 4-digit PIN for", employeeAdded:"Employee added.",
     colEmail:"Email", colRole:"Role", colClient:"Client", colActive:"Status",
     roleMaster:"Master", roleAdmin:"Admin", roleCeo:"CEO", roleSupervisor:"Supervisor", statusActive:"active", statusDisabled:"disabled",
-    addTitle:"Add a dashboard login", phEmail:"email", phPassword:"password (min 6)", pickClient:"— choose client —",
+    addTitle:"Add a dashboard login", phEmail:"name@company.com", phPassword:"Temporary password (6+ characters)", pickClient:"Choose client",
     addBtn:"Create", resetBtn:"Reset password", disableBtn:"Disable", enableBtn:"Enable", deleteBtn:"Delete",
     newPwPrompt:"New password for", confirmDelete:"Delete this login?", saving:"Saving…",
     doneCreated:"Account created.", doneUpdated:"Account updated.", doneSaved:"Saved.", allClientsTag:"all clients",
     clientsTitle:"Clients (call centers)", colCode:"Code", colName:"Name", colPhones:"Phones",
     renameBtn:"Rename", deactivateBtn:"Deactivate", activateBtn:"Activate",
     renamePrompt:"Display name for", inactiveTag:"inactive", doneRenamed:"Renamed.",
-    addClientTitle:"Add a client", phClientCode:"call center code (exact, as sent by the phone)", phClientName:"display name (optional)",
+    addClientTitle:"Add a client", phClientCode:"Client code, e.g. BAGHDAD_SHOP", phClientName:"Business name, e.g. Baghdad Shop",
     addClientBtn:"Add client", confirmDeleteClient:"Delete this client? This only works if it has no phones or logins left.",
     removePhone:"Remove phone", confirmRemovePhone:"Remove this phone? It will disappear from the dashboard and this install will no longer be allowed to upload recordings.",
     blockedPhones:"Blocked phones", blockedPhoneName:"Phone", blockedPhoneClient:"Client", blockedAt:"Blocked", restorePhone:"Restore", confirmRestorePhone:"Restore this phone? It will be allowed to check in and upload again.", doneRestored:"Phone restored.", noBlockedPhones:"No blocked phones.",
@@ -316,7 +316,7 @@ const T = {
   ar: {
     title:"لوحة المعلومات", subtitle:"توقيت بغداد · آخر تحديث", refresh:"تحديث", logout:"خروج",
     loginTitle:"لوحة المعلومات", loginHint:"سجّل الدخول للمتابعة",
-    emailLabel:"البريد الإلكتروني", passwordLabel:"كلمة المرور", loginBtn:"دخول", whatsappLogin:"دخول موظفي واتساب",
+    emailLabel:"you@company.com", passwordLabel:"كلمة المرور", loginBtn:"دخول",
     simulatorTitle:"محاكي الحسابات", simulatorHint:"اختر نوع الحساب لرؤية واجهته الفعلية باستخدام البيانات الحقيقية المحمّلة الآن. التغييرات معطّلة.",
     simulatorMaster:"المدير", simulatorMasterDesc:"عرض المالك لكل المراكز، ويشمل إدارة الحسابات وتحليلات المدير التنفيذي.",
     simulatorCeo:"المدير التنفيذي", simulatorCeoDesc:"عرض الشركة الذي يبدأ بتقييمات الموظفين، مع التحليلات وصحة الأجهزة لشركة واحدة.",
@@ -329,8 +329,8 @@ const T = {
     forgotLink:"نسيت كلمة المرور؟", forgotTitle:"إعادة تعيين كلمة المرور", forgotHint:"سنرسل لك رمزاً بالبريد",
     sendCode:"إرسال الرمز", backToLogin:"← رجوع لتسجيل الدخول",
     codeSent:"إذا كان لهذا البريد حساب، فالرمز في طريقه إليك. تحقق من بريدك (ومجلد الرسائل غير المرغوبة).",
-    resetTitle:"أدخل الرمز من بريدك وكلمة مرور جديدة", codeLabel:"الرمز من البريد",
-    newPwLabel:"كلمة مرور جديدة (٦ على الأقل)", resetSignIn:"تعيين وتسجيل الدخول", resendLink:"إعادة إرسال الرمز",
+    resetTitle:"أدخل الرمز من بريدك وكلمة مرور جديدة", codeLabel:"رمز من 6 أرقام",
+    newPwLabel:"كلمة مرور جديدة (6 أحرف أو أكثر)", resetSignIn:"تعيين وتسجيل الدخول", resendLink:"إعادة إرسال الرمز",
     badResetCode:"رمز خاطئ أو منتهي الصلاحية.", pwTooShort:"كلمة المرور ٦ أحرف على الأقل.",
     clients:"المراكز", phonesWord:"جهاز", onlineWord:"يسجّل", needAttention:"تحتاج متابعة",
     allGood:"سليم", noClients:"لا توجد مراكز تُبلّغ بعد.",
@@ -344,19 +344,19 @@ const T = {
     note:"<b>أخضر</b> = يسجّل وسليم. <b>أحمر</b> = يحتاج متابعة: <i>غير متصل</i> (الجهاز مطفأ أو لا إنترنت)، <i>انقطع</i> (لا اتصال منذ يوم — غالباً مطفأ أو حُذف التطبيق)، <i>لا يسجّل</i> (Shizuku متوقف)، <i>بطارية</i> منخفضة (أقل من 15% وغير موصول) أو <i>تخزين</i> شبه ممتلئ (أقل من 300 ميغابايت). <b>برتقالي</b> = لا يوجد موظف مسجّل الدخول. 🔌 = يشحن. رمادي = موقوف.",
     accounts:"الحسابات", technicalSetup:"الإعدادات التقنية", pipelineOps:"عمليات المعالجة", more:"المزيد", whatsappSetup:"إعداد واتساب", whatsappInbox:"صندوق واتساب", calls:"المكالمات", leads:"العملاء المحتملون", backToHealth:"← رجوع للوحة", accountsTitle:"حسابات الدخول",
     employeesMenu:"الموظفون", employeesTitle:"موظفو المركز", employeesNote:"يستخدم الموظف اسمه ورمزاً من ٤ أرقام لتسجيل بداية دوامه على هواتف شريك المشتركة.",
-    addEmployee:"إضافة موظف", employeeName:"اسم الموظف", employeePin:"رمز من ٤ أرقام", employeeClient:"تعيين للمركز", noEmployees:"لم تتم إضافة الموظفين بعد.",
+    addEmployee:"إضافة موظف", employeeName:"الاسم الكامل، مثال: أحمد علي", employeePin:"4 أرقام، مثال: 1234", employeeClient:"اختر المركز", noEmployees:"لم تتم إضافة الموظفين بعد.",
     renameEmployee:"تغيير الاسم", resetPin:"إعادة تعيين الرمز", deactivateEmployee:"إيقاف", activateEmployee:"تفعيل",
     newEmployeeName:"الاسم الجديد لـ", newEmployeePin:"رمز جديد من ٤ أرقام لـ", employeeAdded:"تمت إضافة الموظف.",
     colEmail:"البريد", colRole:"الدور", colClient:"المركز", colActive:"الحالة",
     roleMaster:"مدير", roleAdmin:"مسؤول", roleCeo:"مدير تنفيذي", roleSupervisor:"مشرف", statusActive:"مفعّل", statusDisabled:"موقوف",
-    addTitle:"إضافة حساب للوحة", phEmail:"البريد الإلكتروني", phPassword:"كلمة المرور (٦ على الأقل)", pickClient:"— اختر المركز —",
+    addTitle:"إضافة حساب للوحة", phEmail:"name@company.com", phPassword:"كلمة مرور مؤقتة (6 أحرف أو أكثر)", pickClient:"اختر المركز",
     addBtn:"إنشاء", resetBtn:"تغيير كلمة المرور", disableBtn:"إيقاف", enableBtn:"تفعيل", deleteBtn:"حذف",
     newPwPrompt:"كلمة مرور جديدة لـ", confirmDelete:"حذف هذا الحساب؟", saving:"جاري الحفظ…",
     doneCreated:"تم إنشاء الحساب.", doneUpdated:"تم تحديث الحساب.", doneSaved:"تم الحفظ.", allClientsTag:"كل المراكز",
     clientsTitle:"المراكز (مراكز الاتصال)", colCode:"الرمز", colName:"الاسم", colPhones:"الأجهزة",
     renameBtn:"إعادة تسمية", deactivateBtn:"إيقاف", activateBtn:"تفعيل",
     renamePrompt:"اسم العرض لـ", inactiveTag:"موقوف", doneRenamed:"تمت إعادة التسمية.",
-    addClientTitle:"إضافة مركز", phClientCode:"رمز مركز الاتصال (بالضبط كما يرسله الجهاز)", phClientName:"اسم العرض (اختياري)",
+    addClientTitle:"إضافة مركز", phClientCode:"رمز المركز، مثال: BAGHDAD_SHOP", phClientName:"اسم النشاط، مثال: بغداد شوب",
     addClientBtn:"إضافة المركز", confirmDeleteClient:"حذف هذا المركز؟ يعمل هذا فقط إذا لم تعد فيه أجهزة أو حسابات دخول.",
     removePhone:"حذف الجهاز", confirmRemovePhone:"حذف هذا الجهاز؟ سيختفي من اللوحة ولن يُسمح لهذا الجهاز برفع التسجيلات بعد الآن.",
     blockedPhones:"الأجهزة المحظورة", blockedPhoneName:"الجهاز", blockedPhoneClient:"المركز", blockedAt:"وقت الحظر", restorePhone:"استعادة", confirmRestorePhone:"استعادة هذا الجهاز؟ سيسمح له بالاتصال ورفع التسجيلات مرة أخرى.", doneRestored:"تمت استعادة الجهاز.", noBlockedPhones:"لا توجد أجهزة محظورة.",
@@ -589,7 +589,6 @@ function loginScreen(err) {
     <button onclick="signIn()">${t("loginBtn")}</button>
     <div class="err">${err ? esc(err) : ""}</div>
     <div class="forgot"><a onclick="showForgot()">${t("forgotLink")}</a></div>
-    <div class="forgot"><a href="whatsapp-inbox.html">${t("whatsappLogin")}</a></div>
     <div class="lang">
       <a onclick="setLang('ar')">العربية</a> · <a onclick="setLang('en')">English</a>
     </div>
@@ -1236,7 +1235,7 @@ function technicalSetupPanel() {
     <p class="note">Each recording client needs its own OpenRouter key before AI transcription and analysis can run. Set that key's daily spending cap in OpenRouter first.</p>
     <div class="addform">
       <select id="ai_client"><option value="">Choose client</option>${opts}</select>
-      <input id="ai_openrouter_key" type="password" autocomplete="off" spellcheck="false" placeholder="OpenRouter API key">
+      <input id="ai_openrouter_key" type="password" autocomplete="off" spellcheck="false" placeholder="OpenRouter API key (sk-or-…)">
       <button onclick="saveOpenRouterKey()">Save client key</button>
     </div>
     <div class="scroll"><table><tr><th>Client</th><th>Code</th><th>AI key</th></tr>
@@ -1286,12 +1285,12 @@ function aiContextPanel() {
     <div class="addform"><select id="context_client" onchange="selectAiContext()">${opts}</select><button onclick="selectAiContext()">Load client</button></div>
     <div class="addform">
       <input id="context_file" type="file" accept=".md,.markdown,.txt,text/markdown,text/plain" onchange="readAiContextFile(this)">
-      <input id="context_note" type="text" maxlength="1000" placeholder="What changed? (optional)">
+      <input id="context_note" type="text" maxlength="1000" placeholder="Change summary (optional)">
       <label><input id="context_activate" type="checkbox" checked> Make this version active now</label>
       <button onclick="saveAiContextVersion()">Save new version</button>
     </div>
     <p class="note">${current ? `Editing from v${esc(current.version_number)}. ` : "No version yet. "}The active version is what the AI workers use within about 30 seconds.</p>
-    <textarea id="context_content" class="context-editor" maxlength="200000" spellcheck="false" placeholder="# Client AI context\n\nAdd products, terms, pricing, scoring guidance…">${esc(detail.selected_content || "")}</textarea>
+    <textarea id="context_content" class="context-editor" maxlength="200000" spellcheck="false" placeholder="# Products\n- Product name: example\n- Price: IQD 25,000\n\n# Scoring guidance\n- What a good call includes">${esc(detail.selected_content || "")}</textarea>
     <p class="note" id="context_file_note">${aiContextSourceName ? `Selected file: ${esc(aiContextSourceName)}` : ""}</p>
     <h3>Version history</h3>
     <div class="scroll"><table><tr><th>Version</th><th>Source / note</th><th>Saved</th><th></th></tr>
@@ -1493,46 +1492,46 @@ function whatsAppSetupPanel() {
   const isMaster = data?.role === "master";
   const options = clients.filter(c => c.active).map(c =>
     `<option value="${esc(c.call_center_code)}">${esc(c.display_name || c.call_center_code)} (${esc(c.call_center_code)})</option>`).join("");
-  const metaConnection = isMaster ? `<section class="card">
-    <h2>4. Connect Meta API</h2>
-    <p class="note">Only the Shareek master can save these credentials. The access token and App Secret are encrypted on the server and are never shown again.</p>
+  const metaConnection = isMaster ? `<h2>2. Connect Meta API</h2>
+    <p class="note">Enter the values from Meta. They are saved securely and cannot be viewed again.</p>
     <div class="addform"><select id="meta_client"><option value="">Choose Inbox client</option>${options}</select>
-      <input id="meta_connection_name" placeholder="Connection name, e.g. Lamac Meta API">
-      <input id="meta_access_token" type="password" autocomplete="off" placeholder="Meta system-user access token">
-      <input id="meta_app_secret" type="password" autocomplete="off" placeholder="Meta App Secret">
-      <input id="meta_app_id" autocomplete="off" placeholder="Meta App ID">
-      <input id="meta_graph_api_version" autocomplete="off" placeholder="Graph API version, e.g. vXX.X">
-      <button onclick="configureMetaConnection()">Save secure connection</button></div>
+      <input id="meta_connection_name" placeholder="Connection name, e.g. Lamac Meta">
+      <input id="meta_access_token" type="password" autocomplete="off" placeholder="System-user access token (EAA…)">
+      <input id="meta_app_secret" type="password" autocomplete="off" placeholder="App Secret">
+      <input id="meta_app_id" autocomplete="off" placeholder="App ID, e.g. 123456789">
+      <input id="meta_graph_api_version" autocomplete="off" placeholder="Graph version, e.g. v23.0">
+      <button onclick="configureMetaConnection()">Save Meta connection</button></div>
     ${metaConnectionResult ? `<div class="insight"><p><strong>Give these to the Meta admin now:</strong></p>
       <p>Webhook URL: <code>${esc(metaConnectionResult.webhook_url)}</code></p>
       <p>Verification token: <code>${esc(metaConnectionResult.verifyToken)}</code></p>
       <p class="note">In Meta for Developers, add this webhook URL and token, verify it, then subscribe to <code>messages</code>. Leave this page or refresh it afterwards to clear the token from this browser.</p></div>` : ""}
-  </section>` : "";
+  ` : "";
   return `<div>
     <h2>WhatsApp Inbox setup</h2>
     <p class="note">Create WhatsApp-only clients, connect their number, and give their team access. These accounts do not appear in the call-recording dashboard.</p>
     ${whatsappSetupMsg ? `<p class="note" style="color:var(--gGreen);font-weight:600">${esc(whatsappSetupMsg)}</p>` : ""}
     <h2>1. Add WhatsApp-only client</h2>
     <div class="addform"><input id="wa_client_code" placeholder="Client code, e.g. BAGHDAD_SHOP">
-      <input id="wa_client_name" placeholder="Client business name"><button onclick="addWhatsAppClient()">Add Inbox client</button></div>
+      <input id="wa_client_name" placeholder="Business name, e.g. Baghdad Shop"><button onclick="addWhatsAppClient()">Add Inbox client</button></div>
     <div class="scroll"><table><tr><th>Client</th><th>Code</th><th>Status</th></tr>
       ${clients.map(c => `<tr><td>${esc(c.display_name || "—")}</td><td>${esc(c.call_center_code)}</td><td>${c.active ? "Active" : "Inactive"}</td></tr>`).join("") || `<tr><td colspan="3" class="sub">No Inbox clients yet.</td></tr>`}</table></div>
-    <h2>2. Connect WhatsApp number</h2>
-    <p class="note">Use the Meta Phone Number ID and WhatsApp Business Account ID — never an access token.</p>
+    ${metaConnection}
+    <h2>${isMaster ? "3" : "2"}. Connect WhatsApp number</h2>
+    <p class="note">Enter the IDs from Meta, plus the public number customers use.</p>
     <div class="addform"><select id="wa_channel_client"><option value="">Choose Inbox client</option>${options}</select>
-      <input id="wa_phone_id" placeholder="Meta Phone Number ID"><input id="wa_waba_id" placeholder="Meta WABA ID">
-      <input id="wa_display_number" placeholder="Public WhatsApp number, e.g. +964…"><input id="wa_display_name" placeholder="WhatsApp display name">
-      <input id="wa_sla" type="number" value="10" min="1" max="1440" placeholder="First response minutes"><button onclick="addWhatsAppChannel()">Connect number</button></div>
+      <input id="wa_phone_id" placeholder="Phone Number ID, e.g. 123456789"><input id="wa_waba_id" placeholder="WABA ID, e.g. 123456789">
+      <input id="wa_display_number" placeholder="Public number, e.g. +964 7XX XXX XXXX"><input id="wa_display_name" placeholder="Display name, e.g. Baghdad Shop">
+      <input id="wa_sla" type="number" value="10" min="1" max="1440" placeholder="Reply target in minutes"><button onclick="addWhatsAppChannel()">Connect number</button></div>
     <div class="scroll"><table><tr><th>Client</th><th>Number</th><th>Name</th><th>SLA</th></tr>
       ${channels.map(c => `<tr><td>${esc(c.call_center_code)}</td><td>${esc(c.display_phone_number || c.phone_number_id)}</td><td>${esc(c.display_name || "—")}</td><td>${esc(c.first_response_sla_minutes)} min</td></tr>`).join("") || `<tr><td colspan="4" class="sub">No numbers connected yet.</td></tr>`}</table></div>
-    <h2>3. Add Inbox user</h2>
+    <h2>${isMaster ? "4" : "3"}. Add Inbox user</h2>
     <div class="addform"><select id="wa_user_client"><option value="">Choose Inbox client</option>${options}</select>
-      <input id="wa_user_email" type="email" autocomplete="off" placeholder="Employee work email">
+      <input id="wa_user_email" type="email" autocomplete="off" placeholder="Employee email, e.g. name@company.com">
       <select id="wa_user_role"><option value="agent">Agent</option><option value="manager">Manager</option></select><button onclick="addWhatsAppUser()">Send invitation</button></div>
     <p class="note">Shareek emails a one-time password-setup code to the employee. They choose their own password; it is never shown to you.</p>
     <div class="scroll"><table><tr><th>Email</th><th>Client</th><th>Role</th><th>Status</th></tr>
       ${users.map(u => `<tr><td dir="ltr">${esc(u.email || "—")}</td><td>${esc(u.call_center_code)}</td><td>${esc(u.role)}</td><td>${u.active ? "Active" : "Inactive"}</td></tr>`).join("") || `<tr><td colspan="4" class="sub">No Inbox users yet.</td></tr>`}</table></div>
-  </div>${metaConnection}`;
+  </div>`;
 }
 async function openWhatsAppSetup() {
   technicalSetupMode = false; whatsappSetupMode = true; whatsappSetupData = null; whatsappSetupMsg = ""; render();
